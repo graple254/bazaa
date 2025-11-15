@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from decimal import Decimal, InvalidOperation
 # -------------------------
 # User
 # -------------------------
@@ -63,19 +64,32 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     was_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    available_stock = models.PositiveIntegerField(default=0, blank=True, null=True)
     percent_discount = models.PositiveIntegerField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.title} ({self.store.name})"
-    
+    from decimal import Decimal, InvalidOperation
+
     def calculate_discount(self):
         """Calculate percent discount if was_price and price are set."""
-        if self.was_price and self.price and self.was_price > self.price:
-            discount = ((self.was_price - self.price) / self.was_price) * 100
+
+        # Convert to Decimal safely
+        try:
+            price = Decimal(str(self.price)) if self.price else None
+            was_price = Decimal(str(self.was_price)) if self.was_price else None
+        except InvalidOperation:
+            self.percent_discount = None
+            return
+
+        # Real logic
+        if was_price and price and was_price > price:
+            discount = ((was_price - price) / was_price) * 100
             self.percent_discount = int(discount)
         else:
             self.percent_discount = None
+
 
 
 # -------------------------

@@ -170,12 +170,100 @@ def shop_manager_dashboard_view(request):
     return render(request, 'files/shop_manager_dashboard.html', context)
 
 
+
 @login_required
 @shop_manager_required
 def product_management_view(request):
     store = request.user.store
-    products = store.products.order_by('-created_at')  # newest first
-    return render(request, 'files/product_management.html', {"products": products})
+
+    # -----------------------------
+    # HANDLE PRODUCT CREATION
+    # -----------------------------
+    if request.method == "POST" and request.POST.get("action") == "create":
+        title = request.POST.get("title")
+        caption = request.POST.get("caption")
+        price = request.POST.get("price")
+        was_price = request.POST.get("was_price")
+        available_stock = request.POST.get("available_stock")
+        images = request.FILES.getlist("images")
+
+        product = Product.objects.create(
+            store=store,
+            title=title,
+            caption=caption,
+            price=price or None,
+            was_price=was_price or None,
+            available_stock=available_stock or 0
+        )
+        product.calculate_discount()
+        product.save()
+
+        for img in images:
+            ProductImage.objects.create(product=product, image=img)
+
+        messages.success(request, "Product created successfully.")
+
+    # -----------------------------
+    # HANDLE PRODUCT UPDATE
+    # -----------------------------
+    if request.method == "POST" and request.POST.get("action") == "edit":
+        product_id = request.POST.get("product_id")
+        product = get_object_or_404(Product, id=product_id, store=store)
+
+        # basic field updates
+        product.title = request.POST.get("title")
+        product.caption = request.POST.get("caption")
+        product.price = request.POST.get("price") or None
+        product.was_price = request.POST.get("was_price") or None
+        product.available_stock = request.POST.get("available_stock") or 0
+        product.is_active = True if request.POST.get("is_active") == "on" else False
+
+        product.calculate_discount()
+        product.save()
+
+        # -----------------------------
+        # REMOVE SELECTED IMAGES
+        # -----------------------------
+        images_to_delete = request.POST.getlist("delete_images")
+        if images_to_delete:
+            ProductImage.objects.filter(id__in=images_to_delete, product=product).delete()
+
+        # -----------------------------
+        # ADD NEW IMAGES
+        # -----------------------------
+        new_images = request.FILES.getlist("images")
+        for img in new_images:
+            ProductImage.objects.create(product=product, image=img)
+
+        messages.success(request, "Product updated successfully.")
+
+    # -----------------------------
+    # HANDLE PRODUCT DELETE
+    # -----------------------------
+    if request.method == "POST" and request.POST.get("action") == "delete":
+        product_id = request.POST.get("product_id")
+        product = get_object_or_404(Product, id=product_id, store=store)
+        product.delete()
+        messages.success(request, "Product deleted.")
+
+    # -----------------------------
+    # DEFAULT: SHOW PRODUCTS + STATS
+    # -----------------------------
+    products = store.products.order_by('-created_at')
+
+    stats = {
+        "total": products.count(),
+        "active": products.filter(is_active=True).count(),
+        "inactive": products.filter(is_active=False).count(),
+        "recent": products[:5],
+    }
+
+    return render(request, 'files/product_management.html', {
+        "products": products,
+        "store": store,
+        "stats": stats,
+    })
+
 
 
 

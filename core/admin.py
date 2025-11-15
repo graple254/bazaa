@@ -73,7 +73,7 @@ class ProductImageInline(admin.TabularInline):
 # -----------------------------
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('title', 'store', 'price', 'was_price', 'percent_discount', 'is_active', 'created_at')
+    list_display = ('title', 'store', 'price', 'was_price', 'percent_discount', 'available_stock', 'is_active', 'created_at')
     search_fields = ('title', 'store__name')
     list_filter = ('is_active', 'created_at', 'store')
     readonly_fields = ('percent_discount', 'created_at')
