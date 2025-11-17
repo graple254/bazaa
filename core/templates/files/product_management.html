@@ -10,407 +10,527 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
     <style>
-        body { background-color: #f5f6fa; }
-        .floating-nav { border-radius: 1.5rem; margin-top: 1rem; }
-        .product-thumb { width: 68px; height: 68px; object-fit: cover; border-radius: 0.8rem; }
-        .image-preview img { width: 72px; height: 72px; object-fit: cover; border-radius: 0.6rem; }
-        .table-actions .btn { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+        .product-thumb { 
+            width: 68px; 
+            height: 68px; 
+            object-fit: cover; 
+        }
+        
+        .table-actions .btn { 
+            width: 36px; 
+            height: 36px; 
+        }
+        
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #0d6efd;
+            background-color: #f8f9ff;
+        }
+        
         @media (max-width: 576px) {
-            .product-thumb { width: 52px; height: 52px; }
-            .floating-nav { padding-inline: 1rem; }
+            .product-thumb { 
+                width: 52px; 
+                height: 52px; 
+            }
         }
     </style>
 </head>
-<body class="bg-body-tertiary">
+<body class="bg-light">
 
-<header class="py-3 bg-body-tertiary sticky-top">
-      <div class="container">
-            <nav class="navbar navbar-expand-lg bg-white shadow-sm px-4 py-2 floating-nav rounded-4">
-                  <a class="navbar-brand fw-semibold" href="{% url 'dashboard' %}">
-                        <i class="bi bi-shop me-2 text-primary"></i>{{ store.name }}
-                  </a>
-                  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                        <span class="navbar-toggler-icon"></span>
-                  </button>
-                  <div class="collapse navbar-collapse" id="navbarNav">
-                        <ul class="navbar-nav ms-auto align-items-lg-center">
-                              <li class="nav-item me-lg-2">
-                                    <a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-house-door me-1"></i>Dashboard</a>
-                              </li>
-                              <li class="nav-item me-lg-2">
-                                    <a class="nav-link active" href="{% url 'product_management' %}"><i class="bi bi-box-seam me-1"></i>Products</a>
-                              </li>
-                              <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                          <i class="bi bi-person-circle me-1"></i>{{ request.user.username }}
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                          <li><a class="dropdown-item" href="{% url 'create_store_profile' %}"><i class="bi bi-gear me-1"></i>Store Settings</a></li>
-                                          <li><hr class="dropdown-divider"></li>
-                                          <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right me-1"></i>Logout</a></li>
-                                    </ul>
-                              </li>
+<header class="py-3 bg-light sticky-top">
+    <div class="container">
+        <nav class="navbar navbar-expand-lg bg-white shadow-sm px-3 py-2 rounded-3">
+            <a class="navbar-brand fw-semibold" href="{% url 'dashboard' %}">
+                <i class="bi bi-shop me-2 text-primary"></i>{{ store.name }}
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item me-lg-2">
+                        <a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-house-door me-1"></i>Dashboard</a>
+                    </li>
+                    <li class="nav-item me-lg-2">
+                        <a class="nav-link active" href="{% url 'product_management' %}"><i class="bi bi-box-seam me-1"></i>Products</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>{{ request.user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'create_store_profile' %}"><i class="bi bi-gear me-1"></i>Store Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right me-1"></i>Logout</a></li>
                         </ul>
-                  </div>
-            </nav>
-      </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </div>
 </header>
-      <main class="container py-4">
-            <div class="row gy-3 align-items-stretch mb-4">
-                  <div class="col-12 col-lg">
-                        <div class="p-4 bg-white shadow-sm rounded-4 h-100">
-                              <p class="text-uppercase text-muted small mb-1">Manage Catalog</p>
-                              <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
-                                    <h1 class="h3 fw-bold mb-0">Product Management</h1>
-                                    <span class="badge rounded-pill text-bg-light px-3 py-2">
-                                          <i class="bi bi-calendar-week me-1"></i>{{ stats.recent|length }} added lately
-                                    </span>
-                              </div>
-                        </div>
-                  </div>
-                  <div class="col-12 col-lg-auto">
-                        <button class="btn btn-primary btn-lg w-100 h-100 rounded-4" data-bs-toggle="modal" data-bs-target="#addEditModal">
-                              <i class="bi bi-plus-circle me-1"></i>Add Product
-                        </button>
-                  </div>
-            </div>
 
-            <section class="row row-cols-2 row-cols-md-4 g-3 mb-4">
-                  <div class="col">
-                        <div class="card border-0 shadow-sm rounded-4 h-100">
-                              <div class="card-body text-center">
-                                    <p class="text-muted text-uppercase small mb-2">Total</p>
-                                    <h3 class="mb-0 text-primary">{{ stats.total }}</h3>
-                                    <small class="text-muted">catalog items</small>
-                              </div>
-                        </div>
-                  </div>
-                  <div class="col">
-                        <div class="card border-0 shadow-sm rounded-4 h-100">
-                              <div class="card-body text-center">
-                                    <p class="text-muted text-uppercase small mb-2">Active</p>
-                                    <h3 class="mb-0 text-success">{{ stats.active }}</h3>
-                                    <span class="badge text-bg-success-subtle mt-1">Live</span>
-                              </div>
-                        </div>
-                  </div>
-                  <div class="col">
-                        <div class="card border-0 shadow-sm rounded-4 h-100">
-                              <div class="card-body text-center">
-                                    <p class="text-muted text-uppercase small mb-2">Inactive</p>
-                                    <h3 class="mb-0 text-secondary">{{ stats.inactive }}</h3>
-                                    <span class="badge text-bg-secondary-subtle mt-1">Hidden</span>
-                              </div>
-                        </div>
-                  </div>
-                  <div class="col">
-                        <div class="card border-0 shadow-sm rounded-4 h-100">
-                              <div class="card-body text-center">
-                                    <p class="text-muted text-uppercase small mb-2">Recent</p>
-                                    <h3 class="mb-0 text-info">{{ stats.recent|length }}</h3>
-                                    <small class="text-muted">this week</small>
-                              </div>
-                        </div>
-                  </div>
-            </section>
-
-      <section class="card border-0 shadow-sm rounded-4 mb-4">
-            <div class="card-header bg-white border-0 py-3">
-                  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
-                        <div>
-                              <p class="text-uppercase text-muted small mb-0">Quick Filters</p>
-                              <h5 class="fw-semibold mb-0">Refine Catalog</h5>
-                        </div>
-                        <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" id="clearFilters">
-                              <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
-                        </button>
-                  </div>
+<main class="container py-4">
+    <!-- Header Section -->
+    <div class="row g-3 align-items-stretch mb-4">
+        <div class="col-12 col-lg">
+            <div class="p-4 bg-white shadow-sm rounded-3 h-100">
+                <p class="text-uppercase text-muted small mb-1">Manage Catalog</p>
+                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                    <h1 class="h3 fw-bold mb-0">Product Management</h1>
+                    <span class="badge rounded-pill bg-light text-dark px-3 py-2">
+                        <i class="bi bi-calendar-week me-1"></i>{{ stats.recent|length }} added lately
+                    </span>
+                </div>
             </div>
-            <div class="card-body py-4">
-                  <div class="row g-3">
-                        <div class="col-lg-7">
-                              <label for="searchInput" class="form-label text-muted small text-uppercase">Search</label>
-                              <div class="input-group input-group-lg shadow-sm rounded-pill overflow-hidden">
-                                    <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-search text-primary"></i></span>
-                                    <input type="search" id="searchInput" class="form-control border-0" placeholder="Search products by title or description...">
+        </div>
+        <div class="col-12 col-lg-auto">
+            <button class="btn btn-primary btn-lg w-100 h-100 rounded-3" data-bs-toggle="modal" data-bs-target="#addEditModal">
+                <i class="bi bi-plus-circle me-1"></i>Add Product
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <section class="row row-cols-2 row-cols-md-4 g-3 mb-4">
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <p class="text-muted text-uppercase small mb-2">Total</p>
+                    <h3 class="mb-0 text-primary">{{ stats.total }}</h3>
+                    <small class="text-muted">catalog items</small>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <p class="text-muted text-uppercase small mb-2">Active</p>
+                    <h3 class="mb-0 text-success">{{ stats.active }}</h3>
+                    <span class="badge bg-success bg-opacity-10 text-success mt-1">Live</span>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <p class="text-muted text-uppercase small mb-2">Inactive</p>
+                    <h3 class="mb-0 text-secondary">{{ stats.inactive }}</h3>
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary mt-1">Hidden</span>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <p class="text-muted text-uppercase small mb-2">Recent</p>
+                    <h3 class="mb-0 text-info">{{ stats.recent|length }}</h3>
+                    <small class="text-muted">this week</small>
+                </div>
+            </div>
+        </div>
+    </section>
+<!-- Filters Section -->
+<section class="card border-0 shadow-sm mb-4 overflow-hidden">
+      <div class="card-body p-0">
+            <div class="p-4 bg-light">
+                  <div class="row g-4">
+                        <!-- Search Bar -->
+                        <div class="col-lg-8">
+                              <label for="searchInput" class="form-label fw-semibold mb-2">
+                                    <i class="bi bi-search text-primary me-1"></i>Search Products
+                              </label>
+                              <div class="position-relative">
+                                    <input type="search" id="searchInput" class="form-control form-control-lg ps-5 border-0 shadow-sm" 
+                                             placeholder="Find products by name, description..." 
+                                             style="border-radius: 12px;">
+                                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                               </div>
                         </div>
-                        <div class="col-lg-5">
-                              <label for="statusFilter" class="form-label text-muted small text-uppercase">Status</label>
-                              <div class="btn-group w-100" role="group">
+
+                        <!-- Status Filter -->
+                        <div class="col-lg-4">
+                              <label class="form-label fw-semibold mb-2">
+                                    <i class="bi bi-filter-circle text-primary me-1"></i>Filter by Status
+                              </label>
+                              <div class="d-grid gap-2">
                                     <input type="radio" class="btn-check" name="statusOptions" id="statusAll" value="" checked>
-                                    <label class="btn btn-outline-secondary" for="statusAll">All</label>
+                                    <label class="btn btn-outline-secondary border-2 rounded-3 py-2" for="statusAll">
+                                          <i class="bi bi-grid-3x3 me-1"></i>All Products
+                                    </label>
 
-                                    <input type="radio" class="btn-check" name="statusOptions" id="statusActive" value="active">
-                                    <label class="btn btn-outline-success" for="statusActive"><i class="bi bi-check-circle me-1"></i>Active</label>
-
-                                    <input type="radio" class="btn-check" name="statusOptions" id="statusInactive" value="inactive">
-                                    <label class="btn btn-outline-secondary" for="statusInactive"><i class="bi bi-pause-circle me-1"></i>Inactive</label>
-                              </div>
-                              <select id="statusFilter" class="d-none">
-                                    <option value=""></option>
-                                    <option value="active"></option>
-                                    <option value="inactive"></option>
-                              </select>
-                        </div>
-                  </div>
-            </div>
-      </section>
-      <script>
-      document.querySelectorAll('input[name="statusOptions"]').forEach(radio => {
-            radio.addEventListener('change', () => {
-                  document.getElementById('statusFilter').value = radio.value;
-                  filterTable();
-            });
-      });
-      </script>
-      <section class="card border-0 shadow-sm rounded-4 overflow-hidden">
-            <div class="card-header bg-white border-0 py-3">
-                  <div class="row align-items-center g-3">
-                        <div class="col-md">
-                              <p class="text-uppercase text-muted small mb-1">Catalog overview</p>
-                              <div class="d-flex align-items-center gap-2 flex-wrap">
-                                    <h5 class="fw-semibold mb-0">Product Library</h5>
-                                    <span class="badge rounded-pill text-bg-light">{{ products|length }} items</span>
+                                    <div class="row g-2">
+                                          <div class="col-6">
+                                                <input type="radio" class="btn-check" name="statusOptions" id="statusActive" value="active">
+                                                <label class="btn btn-outline-success border-2 rounded-3 py-2 w-100" for="statusActive">
+                                                      <i class="bi bi-check-circle-fill me-1"></i>Active
+                                                </label>
+                                          </div>
+                                          <div class="col-6">
+                                                <input type="radio" class="btn-check" name="statusOptions" id="statusInactive" value="inactive">
+                                                <label class="btn btn-outline-secondary border-2 rounded-3 py-2 w-100" for="statusInactive">
+                                                      <i class="bi bi-pause-circle-fill me-1"></i>Inactive
+                                                </label>
+                                          </div>
+                                    </div>
                               </div>
                         </div>
                   </div>
             </div>
+      </div>
+</section>
 
-            <div class="card-body p-0">
-                  <div class="table-responsive">
-                        <table class="table align-middle mb-0 table-hover">
-                              <thead class="text-uppercase small text-muted bg-body-secondary">
-                                    <tr>
-                                          <th class="ps-4">Product</th>
-                                          <th class="text-nowrap">Price</th>
-                                          <th class="text-nowrap">Discount</th>
-                                          <th>Status</th>
-                                          <th>Engagement</th>
-                                          <th class="text-end pe-4">Actions</th>
-                                    </tr>
-                              </thead>
-                              <tbody id="productsTableBody">
-                                    {% if products %}
-                                          {% for product in products %}
-                                          <tr data-product-id="{{ product.id }}" data-status="{% if product.is_active %}active{% else %}inactive{% endif %}">
-                                                <td class="ps-4">
-                                                      <div class="d-flex align-items-center gap-3">
-                                                            {% if product.images.first %}
-                                                                  <img src="{{ product.images.first.image.url }}" alt="{{ product.title }}" class="product-thumb rounded">
-                                                            {% else %}
-                                                                  <div class="product-thumb bg-light rounded d-flex align-items-center justify-content-center">
-                                                                        <i class="bi bi-image text-muted"></i>
-                                                                  </div>
-                                                            {% endif %}
-                                                            <div>
-                                                                  <div class="fw-semibold">{{ product.title }}</div>
-                                                                  <div class="text-muted small">{{ product.caption|default:"No description"|truncatewords:10 }}</div>
-                                                            </div>
-                                                      </div>
-                                                      <div class="d-none product-images-data">
-                                                            {% for img in product.images.all %}
-                                                                  <img src="{{ img.image.url }}" alt="">
-                                                            {% endfor %}
-                                                      </div>
-                                                </td>
-                                                <td class="text-nowrap">
-                                                      {% if product.price %}
-                                                            <div class="fw-semibold text-success">KES {{ product.price|floatformat:0 }}</div>
-                                                            {% if product.was_price and product.was_price > product.price %}
-                                                                  <div class="small text-muted text-decoration-line-through">KES {{ product.was_price|floatformat:0 }}</div>
-                                                            {% endif %}
-                                                      {% else %}
-                                                            <span class="text-muted">—</span>
-                                                      {% endif %}
-                                                </td>
-                                                <td>
-                                                      {% if product.percent_discount %}
-                                                            <span class="badge bg-danger-subtle text-danger">-{{ product.percent_discount }}%</span>
-                                                      {% else %}
-                                                            <span class="text-muted">—</span>
-                                                      {% endif %}
-                                                </td>
-                                                <td>
-                                                      {% if product.is_active %}
-                                                            <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Active</span>
-                                                      {% else %}
-                                                            <span class="badge bg-secondary-subtle text-secondary"><i class="bi bi-pause-circle me-1"></i>Inactive</span>
-                                                      {% endif %}
-                                                </td>
-                                                <td>
-                                                      <div class="d-flex align-items-center gap-3 small text-muted">
-                                                            <span><i class="bi bi-heart-fill text-danger me-1"></i>{{ product.likes.count|default:0 }}</span>
-                                                            <span><i class="bi bi-chat-dots-fill text-primary me-1"></i>{{ product.comments.count|default:0 }}</span>
-                                                      </div>
-                                                </td>
-                                                <td class="text-end pe-4 table-actions">
-                                                      <div class="btn-group btn-group-sm" role="group">
-                                                            <button class="btn btn-outline-primary btn-edit" type="button" title="Edit" data-product="{{ product.id }}">
-                                                                  <i class="bi bi-pencil"></i>
-                                                            </button>
-                                                            <button class="btn btn-outline-secondary btn-view" type="button" title="View" data-product="{{ product.id }}">
-                                                                  <i class="bi bi-eye"></i>
-                                                            </button>
-                                                            <button class="btn btn-outline-danger btn-delete" type="button" title="Delete" data-product="{{ product.id }}" data-product-name="{{ product.title|escape }}">
-                                                                  <i class="bi bi-trash"></i>
-                                                            </button>
-                                                      </div>
-                                                </td>
-                                          </tr>
-                                          {% endfor %}
-                                    {% else %}
-                                          <tr>
-                                                <td colspan="6" class="text-center py-5">
-                                                      <div class="d-inline-flex flex-column align-items-center gap-2">
-                                                            <span class="rounded-circle bg-body-secondary p-3">
-                                                                  <i class="bi bi-box-seam text-muted fs-3"></i>
-                                                            </span>
-                                                            <h5 class="text-muted mb-0">No products yet</h5>
-                                                            <p class="text-muted small">Upload items to start selling.</p>
-                                                            <button class="btn btn-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#addEditModal">
-                                                                  <i class="bi bi-plus-circle me-1"></i>Add Your First Product
-                                                            </button>
-                                                      </div>
-                                                </td>
-                                          </tr>
-                                    {% endif %}
-                              </tbody>
-                        </table>
-                  </div>
+    <!-- Products Table -->
+    <section class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header bg-white border-0 py-3">
+            <div class="row align-items-center g-3">
+                <div class="col-md">
+                    <p class="text-uppercase text-muted small mb-1">Catalog overview</p>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <h5 class="fw-semibold mb-0">Product Library</h5>
+                        <span class="badge rounded-pill bg-light text-dark">{{ products|length }} items</span>
+                    </div>
+                </div>
             </div>
-
-            {% if products.has_other_pages %}
-            <div class="card-footer bg-white border-0">
-                  <nav aria-label="Page navigation">
-                        <ul class="pagination pagination-sm justify-content-center mb-0">
-                              {% if products.has_previous %}
-                                    <li class="page-item"><a class="page-link" href="?page={{ products.previous_page_number }}">Previous</a></li>
-                              {% else %}
-                                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
-                              {% endif %}
-                              {% for i in products.paginator.page_range %}
-                                    {% if products.number == i %}
-                                          <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-borderless align-middle mb-0">
+                    <thead class="border-bottom">
+                        <tr class="text-muted small">
+                            <th class="ps-4 py-3 fw-semibold">PRODUCT</th>
+                            <th class="py-3 fw-semibold">PRICING</th>
+                            <th class="py-3 fw-semibold">STOCK</th>
+                            <th class="py-3 fw-semibold">STATUS</th>
+                            <th class="py-3 fw-semibold">ENGAGEMENT</th>
+                            <th class="text-end pe-4 py-3 fw-semibold">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody">
+                        {% if products %}
+                            {% for product in products %}
+                            <tr class="border-bottom" data-product-id="{{ product.id }}" data-status="{% if product.is_active %}active{% else %}inactive{% endif %}">
+                                <td class="ps-4 py-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        {% with product.images.first as primary_image %}
+                                            {% if primary_image %}
+                                                <img src="{{ primary_image.image_thumb.url|default:primary_image.image.url }}" 
+                                                       alt="{{ product.title }}" 
+                                                       class="product-thumb rounded shadow-sm" 
+                                                       loading="lazy">
+                                            {% else %}
+                                                <div class="product-thumb bg-light rounded d-flex align-items-center justify-content-center">
+                                                    <i class="bi bi-image text-muted fs-5"></i>
+                                                </div>
+                                            {% endif %}
+                                        {% endwith %}
+                                        <div class="flex-grow-1">
+                                            <h6 class="fw-semibold mb-1">{{ product.title }}</h6>
+                                            <p class="text-muted small mb-0">{{ product.caption|default:"No description"|truncatewords:10 }}</p>
+                                            {% if product.images.count > 1 %}
+                                                <span class="badge bg-light text-dark mt-1"><i class="bi bi-images me-1"></i>{{ product.images.count }} photos</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="d-none product-images-data">
+                                        {% for img in product.images.all %}
+                                            <img src="{{ img.image_medium.url|default:img.image.url }}" alt="">
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td class="py-3">
+                                    {% if product.price %}
+                                        <div class="fw-bold text-success mb-1">KES {{ product.price|floatformat:0 }}</div>
+                                        {% if product.was_price and product.was_price > product.price %}
+                                            <small class="text-muted text-decoration-line-through">KES {{ product.was_price|floatformat:0 }}</small>
+                                            <span class="badge bg-danger bg-opacity-10 text-danger ms-1">-{{ product.percent_discount|default:0 }}%</span>
+                                        {% endif %}
                                     {% else %}
-                                          <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                                        <span class="text-muted small">Not set</span>
                                     {% endif %}
-                              {% endfor %}
-                              {% if products.has_next %}
-                                    <li class="page-item"><a class="page-link" href="?page={{ products.next_page_number }}">Next</a></li>
-                              {% else %}
-                                    <li class="page-item disabled"><span class="page-link">Next</span></li>
-                              {% endif %}
-                        </ul>
-                  </nav>
+                                </td>
+                                <td class="py-3">
+                                    {% if product.available_stock > 0 %}
+                                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">{{ product.available_stock }} units</span>
+                                    {% else %}
+                                        <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2">Out of stock</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3">
+                                    {% if product.is_active %}
+                                        <span class="badge bg-success px-3 py-2"><i class="bi bi-check-circle me-1"></i>Active</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary px-3 py-2"><i class="bi bi-pause-circle me-1"></i>Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3">
+                                    <div class="d-flex flex-column gap-1">
+                                        <span class="small"><i class="bi bi-heart-fill text-danger me-1"></i>{{ product.likes.count|default:0 }} likes</span>
+                                        <span class="small"><i class="bi bi-chat-dots-fill text-primary me-1"></i>{{ product.comments.count|default:0 }} comments</span>
+                                    </div>
+                                </td>
+                                <td class="text-end pe-4 py-3">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button class="btn btn-outline-primary btn-edit" type="button" title="Edit" data-product="{{ product.id }}">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-outline-info btn-view" type="button" title="View" data-product="{{ product.id }}">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-delete" type="button" title="Delete" data-product="{{ product.id }}" data-product-name="{{ product.title|escape }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <div class="py-5">
+                                        <div class="mb-4">
+                                            <i class="bi bi-box-seam text-muted" style="font-size: 4rem;"></i>
+                                        </div>
+                                        <h4 class="text-muted mb-2">No Products Found</h4>
+                                        <p class="text-muted mb-4">Start building your catalog by adding your first product.</p>
+                                        <button class="btn btn-primary btn-lg rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addEditModal">
+                                            <i class="bi bi-plus-circle me-2"></i>Add Your First Product
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
             </div>
-            {% endif %}
-      </section>
-    </main>
+        </div>
 
-    <!-- Add/Edit Modal -->
-    <div class="modal fade" id="addEditModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <form method="POST" enctype="multipart/form-data" id="productForm">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="create">
-                <input type="hidden" name="product_id" id="editProductId">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="modalTitle">Add Product</h5>
+        {% if products.has_other_pages %}
+        <div class="card-footer bg-white border-0">
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    {% if products.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page={{ products.previous_page_number }}">Previous</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                    {% endif %}
+                    {% for i in products.paginator.page_range %}
+                        {% if products.number == i %}
+                            <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if products.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ products.next_page_number }}">Next</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Next</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </section>
+</main>
+
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="addEditModal" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                  <div class="modal-header bg-light">
+                        <div>
+                              <h5 class="modal-title fw-bold" id="modalTitle">Add New Product</h5>
+                              <p class="text-muted small mb-0">Fill in the product details below</p>
+                        </div>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row g-3">
-                            <div class="col-lg-8">
-                                <div>
-                                    <label class="form-label">Product Title <span class="text-danger">*</span></label>
-                                    <input type="text" name="title" id="inputTitle" class="form-control" required>
-                                </div>
-                                <div class="mt-3">
-                                    <label class="form-label">Description</label>
-                                    <textarea name="caption" id="inputCaption" class="form-control" rows="3" placeholder="Describe your product..."></textarea>
-                                </div>
-                              <div class="mt-3">
-                                    <label class="form-label">Available Stock</label>
-                                    <input type="number" name="available_stock" id="inputStock" class="form-control" min="0" value="0">
+                  </div>
+                  <form method="POST" enctype="multipart/form-data" id="productForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="create">
+                        <input type="hidden" name="product_id" id="editProductId">
+                        
+                        <!-- Reduced max-height to give footer more room on small screens -->
+                        <div class="modal-body overflow-auto" style="max-height: calc(100vh - 250px);">
+                              <div class="row g-4">
+                                    <!-- Left Column: Product Details -->
+                                    <div class="col-md-7">
+                                          <div class="mb-3">
+                                                <label class="form-label fw-semibold">Product Title <span class="text-danger">*</span></label>
+                                                <input type="text" name="title" id="inputTitle" class="form-control" placeholder="Enter product name" required>
+                                          </div>
+                                          
+                                          <div class="mb-3">
+                                                <label class="form-label fw-semibold">Description</label>
+                                                <textarea name="caption" id="inputCaption" class="form-control" rows="3" placeholder="Describe your product features, benefits, etc."></textarea>
+                                                <div class="form-text">Optional: Add detailed product description</div>
+                                          </div>
+
+                                          <div class="row g-2 mb-3">
+                                                <div class="col-sm-6">
+                                                      <label class="form-label fw-semibold">Current Price (KES)</label>
+                                                      <div class="input-group">
+                                                            <span class="input-group-text bg-light">KES</span>
+                                                            <input type="number" name="price" id="inputPrice" step="0.01" min="0" class="form-control" placeholder="0.00">
+                                                      </div>
+                                                </div>
+                                                <div class="col-sm-6">
+                                                      <label class="form-label fw-semibold">Original Price (KES)</label>
+                                                      <div class="input-group">
+                                                            <span class="input-group-text bg-light">KES</span>
+                                                            <input type="number" name="was_price" id="inputWasPrice" step="0.01" min="0" class="form-control" placeholder="0.00">
+                                                      </div>
+                                                      <div class="form-text">For showing discounts</div>
+                                                </div>
+                                          </div>
+
+                                          <div class="mb-3">
+                                                <label class="form-label fw-semibold">Available Stock</label>
+                                                <div class="input-group">
+                                                      <span class="input-group-text bg-light"><i class="bi bi-box-seam"></i></span>
+                                                      <input type="number" name="available_stock" id="inputStock" class="form-control" min="0" value="0" placeholder="Enter quantity">
+                                                      <span class="input-group-text bg-light">units</span>
+                                                </div>
+                                          </div>
+
+                                          <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch" name="is_active" id="inputActive" checked>
+                                                <label class="form-check-label fw-semibold" for="inputActive">
+                                                      <i class="bi bi-eye me-1"></i>Publish Product (Make it visible)
+                                                </label>
+                                          </div>
+                                    </div>
+
+                                    <!-- Right Column: Image Upload -->
+                                    <div class="col-md-5">
+                                          <div class="card h-100">
+                                                <div class="card-body d-flex flex-column">
+                                                      <label class="form-label fw-semibold mb-3">
+                                                            <i class="bi bi-images me-1"></i>Product Images
+                                                      </label>
+                                                      
+                                                      <div class="upload-area flex-grow-1 d-flex flex-column align-items-center justify-content-center text-center mb-3 p-3 rounded" id="uploadArea">
+                                                            <i class="bi bi-cloud-upload fs-1 text-primary mb-2"></i>
+                                                            <p class="mb-2 fw-semibold">Click to upload or drag and drop</p>
+                                                            <p class="text-muted small mb-0">PNG, JPG, WEBP (Max 5MB each)</p>
+                                                      </div>
+
+                                                      <input type="file" name="images" id="inputImages" class="d-none" accept="image/*" multiple>
+                                                      <button type="button" class="btn btn-outline-primary w-100" id="chooseImagesBtn">
+                                                            <i class="bi bi-plus-circle me-2"></i>Choose Images
+                                                      </button>
+
+                                                      <!-- Image Preview Grid -->
+                                                      <div id="imagePreview" class="row row-cols-3 g-2 mt-3"></div>
+                                                </div>
+                                          </div>
+                                    </div>
                               </div>
-                                <div class="row mt-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Current Price (KES)</label>
-                                        <input type="number" name="price" id="inputPrice" step="0.01" class="form-control">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Original Price (KES)</label>
-                                        <input type="number" name="was_price" id="inputWasPrice" step="0.01" class="form-control">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-4">
-                                <div>
-                                    <label class="form-label">Product Images</label>
-                                    <input type="file" name="images" id="inputImages" class="form-control" accept="image/*" multiple>
-                                    <div id="imagePreview" class="d-flex flex-wrap gap-2 mt-2"></div>
-                                </div>
-                                <div class="mt-3">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="is_active" id="inputActive" checked>
-                                        <label class="form-check-label" for="inputActive">Active Product</label>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="submitBtn">Create Product</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- View Product Modal -->
-    <div class="modal fade" id="viewModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Product Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <div class="modal-footer bg-light">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-circle me-1"></i>Cancel
+                              </button>
+                              <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="bi bi-check-circle me-1"></i>Create Product
+                              </button>
+                        </div>
+                  </form>
+            </div>
+      </div>
+</div>
+
+<!-- View Product Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <div>
+                    <h5 class="modal-title fw-bold">Product Details</h5>
+                    <p class="text-muted small mb-0">Complete product information</p>
                 </div>
-                <div class="modal-body">
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <div class="swiper product-swiper rounded">
-                                <div class="swiper-wrapper" id="viewSwiperWrapper"></div>
-                                <div class="swiper-pagination"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-4">
+                    <!-- Image Gallery -->
+                    <div class="col-md-5">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <div class="swiper product-swiper rounded overflow-hidden">
+                                    <div class="swiper-wrapper" id="viewSwiperWrapper"></div>
+                                    <div class="swiper-pagination"></div>
+                                    <div class="swiper-button-prev"></div>
+                                    <div class="swiper-button-next"></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <h4 id="viewTitle" class="fw-bold"></h4>
-                            <p id="viewCaption" class="text-muted"></p>
-                            <div id="viewPrice" class="mb-3"></div>
-                            <div id="viewStatus" class="mb-3"></div>
-                            <div class="row g-2">
-                                <div class="col-4">
-                                    <div class="text-center p-2 bg-light rounded">
-                                        <i class="bi bi-heart-fill text-danger"></i>
-                                        <div class="small mt-1" id="viewLikes">0</div>
-                                        <div class="text-muted xsmall">Likes</div>
+                    </div>
+
+                    <!-- Product Info -->
+                    <div class="col-md-7">
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <h4 id="viewTitle" class="fw-bold mb-0"></h4>
+                                <span id="viewStatus"></span>
+                            </div>
+                            <p id="viewCaption" class="text-muted mb-0"></p>
+                        </div>
+
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label class="text-muted small text-uppercase mb-1">Current Price</label>
+                                        <div id="viewPrice" class="h5 mb-0 text-success fw-bold"></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="text-muted small text-uppercase mb-1">Original Price</label>
+                                        <div id="viewWasPrice" class="h5 mb-0 text-muted"></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="text-muted small text-uppercase mb-1">Available Stock</label>
+                                        <div id="viewStock" class="h5 mb-0 fw-bold"></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="text-muted small text-uppercase mb-1">Discount</label>
+                                        <div id="viewDiscount" class="h5 mb-0"></div>
                                     </div>
                                 </div>
-                                <div class="col-4">
-                                    <div class="text-center p-2 bg-light rounded">
-                                        <i class="bi bi-chat-dots-fill text-primary"></i>
-                                        <div class="small mt-1" id="viewComments">0</div>
-                                        <div class="text-muted xsmall">Comments</div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-4">
+                                <div class="card text-center border-0 shadow-sm">
+                                    <div class="card-body py-3">
+                                        <i class="bi bi-heart-fill text-danger fs-4"></i>
+                                        <div class="fw-bold mt-2" id="viewLikes">0</div>
+                                        <div class="text-muted small">Likes</div>
                                     </div>
                                 </div>
-                                <div class="col-4">
-                                    <div class="text-center p-2 bg-light rounded">
-                                        <i class="bi bi-images text-success"></i>
-                                        <div class="small mt-1" id="viewImages">0</div>
-                                        <div class="text-muted xsmall">Images</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card text-center border-0 shadow-sm">
+                                    <div class="card-body py-3">
+                                        <i class="bi bi-chat-dots-fill text-primary fs-4"></i>
+                                        <div class="fw-bold mt-2" id="viewComments">0</div>
+                                        <div class="text-muted small">Comments</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card text-center border-0 shadow-sm">
+                                    <div class="card-body py-3">
+                                        <i class="bi bi-images text-success fs-4"></i>
+                                        <div class="fw-bold mt-2" id="viewImages">0</div>
+                                        <div class="text-muted small">Images</div>
                                     </div>
                                 </div>
                             </div>
@@ -420,155 +540,259 @@
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body text-center py-4">
-                    <i class="bi bi-exclamation-triangle text-danger fs-1"></i>
-                    <h5 class="mt-3">Delete Product?</h5>
-                    <p class="text-muted" id="deleteProductName"></p>
-                    <div class="d-flex justify-content-center gap-2 mt-3">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                        <form method="POST" class="d-inline">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="product_id" id="deleteProductId">
-                            <button type="submit" class="btn btn-danger">Delete</button>
-                        </form>
-                    </div>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center p-5">
+                <div class="mb-3">
+                    <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 4rem;"></i>
+                </div>
+                <h4 class="fw-bold mb-2">Delete Product?</h4>
+                <p class="text-muted mb-1" id="deleteProductName"></p>
+                <p class="text-danger small mb-4">This action cannot be undone</p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <form method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="product_id" id="deleteProductId">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i>Delete Permanently
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script>
-        // Search & Filter
-        document.getElementById('searchInput').addEventListener('input', filterTable);
-        document.getElementById('statusFilter').addEventListener('change', filterTable);
-        document.getElementById('clearFilters').addEventListener('click', clearFilters);
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+// Simple JavaScript without classes - clean and functional
+document.addEventListener('DOMContentLoaded', function() {
+    // Search & Filter
+    const searchInput = document.getElementById('searchInput');
+    const clearFilters = document.getElementById('clearFilters');
+    
+    if (searchInput) searchInput.addEventListener('input', filterTable);
+    if (clearFilters) clearFilters.addEventListener('click', clearAllFilters);
+    
+    document.querySelectorAll('input[name="statusOptions"]').forEach(radio => {
+        radio.addEventListener('change', filterTable);
+    });
 
-        function filterTable() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const status = document.getElementById('statusFilter').value;
-            document.querySelectorAll('#productsTableBody tr[data-product-id]').forEach(row => {
-                const title = row.querySelector('.fw-semibold').textContent.toLowerCase();
-                const desc = row.querySelector('.text-muted').textContent.toLowerCase();
-                const rowStatus = row.dataset.status;
-                const matchesSearch = title.includes(query) || desc.includes(query);
-                const matchesStatus = !status || rowStatus === status;
-                row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
-            });
-        }
-
-        function clearFilters() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('statusFilter').value = '';
-            filterTable();
-        }
-
-        // Image Preview
-        document.getElementById('inputImages').addEventListener('change', function(e) {
-            const preview = document.getElementById('imagePreview');
-            preview.innerHTML = '';
-            Array.from(e.target.files).forEach(file => {
-                if (!file.type.startsWith('image/')) return;
-                
-                const reader = new FileReader();
-                reader.onload = ev => {
-                    const img = document.createElement('img');
-                    img.src = ev.target.result;
-                    img.className = 'image-preview img rounded border';
-                    preview.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            });
+    // Image Upload
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('inputImages');
+    const chooseImagesBtn = document.getElementById('chooseImagesBtn');
+    
+    if (chooseImagesBtn) chooseImagesBtn.addEventListener('click', () => fileInput.click());
+    if (fileInput) fileInput.addEventListener('change', handleImageSelection);
+    
+    // Drag and drop
+    if (uploadArea) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
         });
-
-        // Open Edit Modal
-        function openEditModal(id) {
-            const row = document.querySelector(`tr[data-product-id="${id}"]`);
-            const title = row.querySelector('.fw-semibold').textContent.trim();
-            const caption = row.querySelector('.text-muted').textContent.trim();
-            const price = row.querySelector('.text-success')?.textContent.replace('KES ', '').trim() || '';
-            const wasPrice = row.querySelector('.text-decoration-line-through')?.textContent.replace('KES ', '').trim() || '';
-            const isActive = row.dataset.status === 'active';
-
-            document.getElementById('modalTitle').textContent = 'Edit Product';
-            document.getElementById('editProductId').value = id;
-            document.getElementById('inputTitle').value = title;
-            document.getElementById('inputCaption').value = caption;
-            document.getElementById('inputPrice').value = price;
-            document.getElementById('inputWasPrice').value = wasPrice;
-            document.getElementById('inputActive').checked = isActive;
-            document.getElementById('productForm').elements['action'].value = 'edit';
-            document.getElementById('submitBtn').textContent = 'Update Product';
-
-            new bootstrap.Modal(document.getElementById('addEditModal')).show();
-        }
-
-        // Open View Modal
-        function openViewModal(id) {
-            const row = document.querySelector(`tr[data-product-id="${id}"]`);
-            const title = row.querySelector('.fw-semibold').textContent;
-            const caption = row.querySelector('.text-muted').textContent;
-            const priceText = row.querySelector('.text-success')?.textContent || 'Not set';
-            const wasPriceText = row.querySelector('.text-decoration-line-through')?.textContent;
-            const images = Array.from(row.querySelectorAll('.product-images-data img')).map(img => img.src);
-            const likes = row.querySelector('i.bi-heart-fill').parentElement.textContent.trim();
-            const comments = row.querySelector('i.bi-chat-dots-fill').parentElement.textContent.trim();
-            const status = row.dataset.status;
-
-            document.getElementById('viewTitle').textContent = title;
-            document.getElementById('viewCaption').textContent = caption || 'No description';
-            document.getElementById('viewPrice').innerHTML = priceText + (wasPriceText ? `<br><del class="text-muted small">${wasPriceText}</del>` : '');
-            document.getElementById('viewStatus').innerHTML = status === 'active' 
-                ? '<span class="badge bg-success">Active</span>' 
-                : '<span class="badge bg-secondary">Inactive</span>';
-            document.getElementById('viewLikes').textContent = likes;
-            document.getElementById('viewComments').textContent = comments;
-            document.getElementById('viewImages').textContent = images.length;
-
-            const wrapper = document.getElementById('viewSwiperWrapper');
-            wrapper.innerHTML = images.length 
-                ? images.map(src => `<div class="swiper-slide"><img src="${src}" class="w-100" style="height: 300px; object-fit: contain;"></div>`).join('')
-                : '<div class="swiper-slide bg-light d-flex align-items-center justify-content-center"><i class="bi bi-image fs-1 text-muted"></i></div>';
-
-            const modal = new bootstrap.Modal(document.getElementById('viewModal'));
-            modal.show();
-
-            setTimeout(() => {
-                new Swiper('.product-swiper', {
-                    loop: images.length > 1,
-                    pagination: { el: '.swiper-pagination', clickable: true }
-                });
-            }, 150);
-        }
-
-        // Open Delete Modal
-        function openDeleteModal(id, name) {
-            document.getElementById('deleteProductId').value = id;
-            document.getElementById('deleteProductName').textContent = `"${name}" will be permanently deleted.`;
-            new bootstrap.Modal(document.getElementById('deleteModal')).show();
-        }
-
-        // Reset Modal on Hide
-        document.getElementById('addEditModal').addEventListener('hidden.bs.modal', () => {
-            document.getElementById('productForm').reset();
-            document.getElementById('imagePreview').innerHTML = '';
-            document.getElementById('editProductId').value = '';
-            document.getElementById('modalTitle').textContent = 'Add Product';
-            document.getElementById('productForm').elements['action'].value = 'create';
-            document.getElementById('submitBtn').textContent = 'Create Product';
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => uploadArea.classList.add('dragover'), false);
         });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => uploadArea.classList.remove('dragover'), false);
+        });
+        
+        uploadArea.addEventListener('drop', handleDrop, false);
+        uploadArea.addEventListener('click', () => fileInput.click(), false);
+    }
 
-        document.querySelectorAll('.btn-edit').forEach(btn => btn.addEventListener('click', () => openEditModal(btn.dataset.product)));
-        document.querySelectorAll('.btn-view').forEach(btn => btn.addEventListener('click', () => openViewModal(btn.dataset.product)));
-        document.querySelectorAll('.btn-delete').forEach(btn => btn.addEventListener('click', () => openDeleteModal(btn.dataset.product, btn.dataset.productName)));
-    </script>
+    // Action buttons
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', () => openEditModal(btn.dataset.product));
+    });
+    
+    document.querySelectorAll('.btn-view').forEach(btn => {
+        btn.addEventListener('click', () => openViewModal(btn.dataset.product));
+    });
+    
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', () => openDeleteModal(btn.dataset.product, btn.dataset.productName));
+    });
+
+    // Modal reset
+    const addEditModal = document.getElementById('addEditModal');
+    if (addEditModal) {
+        addEditModal.addEventListener('hidden.bs.modal', resetModal);
+    }
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    document.getElementById('inputImages').files = files;
+    handleImageSelection({ target: { files } });
+}
+
+function filterTable() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const status = document.querySelector('input[name="statusOptions"]:checked').value;
+    
+    document.querySelectorAll('#productsTableBody tr[data-product-id]').forEach(row => {
+        const title = row.querySelector('.fw-semibold').textContent.toLowerCase();
+        const desc = row.querySelector('.text-muted').textContent.toLowerCase();
+        const rowStatus = row.dataset.status;
+        const matchesSearch = title.includes(query) || desc.includes(query);
+        const matchesStatus = !status || rowStatus === status;
+        row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+    });
+}
+
+function clearAllFilters() {
+    document.getElementById('searchInput').value = '';
+    document.querySelectorAll('input[name="statusOptions"]').forEach(radio => {
+        if (radio.value === '') radio.checked = true;
+    });
+    filterTable();
+}
+
+function handleImageSelection(e) {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '';
+    
+    Array.from(e.target.files).forEach((file) => {
+        if (!file.type.startsWith('image/')) return;
+        
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const col = document.createElement('div');
+            col.className = 'col position-relative';
+            col.innerHTML = `
+                <img src="${ev.target.result}" class="w-100 rounded border" style="height: 80px; object-fit: cover;">
+                <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle p-0" 
+                            style="width: 24px; height: 24px;" onclick="this.parentElement.remove()">
+                    <i class="bi bi-x"></i>
+                </button>
+            `;
+            preview.appendChild(col);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function openEditModal(id) {
+    const row = document.querySelector(`tr[data-product-id="${id}"]`);
+    if (!row) return;
+
+    const title = row.querySelector('.fw-semibold').textContent.trim();
+    const caption = row.querySelectorAll('.text-muted')[0].textContent.trim();
+    const priceElement = row.querySelector('.text-success');
+    const price = priceElement ? priceElement.textContent.replace('KES ', '').replace(/,/g, '').trim() : '';
+    const wasPriceElement = row.querySelector('.text-decoration-line-through');
+    const wasPrice = wasPriceElement ? wasPriceElement.textContent.replace('KES ', '').replace(/,/g, '').trim() : '';
+    const stockElement = row.querySelector('.product-stock-badge');
+    const stock = stockElement ? stockElement.textContent.replace(' units', '').replace('Out of stock', '0').trim() : '0';
+    const isActive = row.dataset.status === 'active';
+
+    document.getElementById('modalTitle').textContent = 'Edit Product';
+    document.getElementById('editProductId').value = id;
+    document.getElementById('inputTitle').value = title;
+    document.getElementById('inputCaption').value = caption !== 'No description' ? caption : '';
+    document.getElementById('inputPrice').value = price;
+    document.getElementById('inputWasPrice').value = wasPrice;
+    document.getElementById('inputStock').value = stock;
+    document.getElementById('inputActive').checked = isActive;
+    document.querySelector('input[name="action"]').value = 'edit';
+    document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-circle me-1"></i>Update Product';
+
+    new bootstrap.Modal(document.getElementById('addEditModal')).show();
+}
+function openViewModal(id) {
+    const row = document.querySelector(`tr[data-product-id="${id}"]`);
+    if (!row) return;
+
+    const title = row.querySelector('.fw-semibold').textContent;
+    const caption = row.querySelectorAll('.text-muted')[0].textContent;
+    const priceElement = row.querySelector('.text-success');
+    const priceText = priceElement ? priceElement.textContent : 'Not set';
+    const wasPriceElement = row.querySelector('.text-decoration-line-through');
+    const wasPriceText = wasPriceElement ? wasPriceElement.textContent : 'N/A';
+    
+    // Get discount specifically from the pricing cell
+    const discountElement = row.querySelector('td:nth-child(2) span.badge.bg-danger.bg-opacity-10.text-danger');
+    const discountText = discountElement ? discountElement.textContent.trim() : 'No discount';
+    
+    // Get stock specifically from the stock cell
+    const stockElement = row.querySelector('td:nth-child(3) .badge');
+    const stockText = stockElement ? stockElement.textContent.trim() : '0 units';
+    
+    const images = Array.from(row.querySelectorAll('.product-images-data img')).map(img => img.src);
+    const likes = row.querySelector('i.bi-heart-fill')?.parentElement?.textContent.trim().split(' ')[0] || 0;
+    const comments = row.querySelector('i.bi-chat-dots-fill')?.parentElement?.textContent.trim().split(' ')[0] || 0;
+    const status = row.dataset.status;
+
+    document.getElementById('viewTitle').textContent = title;
+    document.getElementById('viewCaption').textContent = caption || 'No description available';
+    document.getElementById('viewPrice').textContent = priceText;
+    document.getElementById('viewWasPrice').textContent = wasPriceText;
+    document.getElementById('viewStock').innerHTML = stockText.includes('Out') 
+        ? '<span class="badge bg-danger px-3 py-2">Out of Stock</span>' 
+        : stockText;
+    document.getElementById('viewDiscount').innerHTML = discountText === 'No discount' 
+        ? '<span class="text-muted">None</span>' 
+        : `<span class="badge bg-danger">${discountText}</span>`;
+    document.getElementById('viewStatus').innerHTML = status === 'active' 
+        ? '<span class="badge bg-success px-3 py-2"><i class="bi bi-check-circle me-1"></i>Active</span>' 
+        : '<span class="badge bg-secondary px-3 py-2"><i class="bi bi-pause-circle me-1"></i>Inactive</span>';
+    document.getElementById('viewLikes').textContent = likes;
+    document.getElementById('viewComments').textContent = comments;
+    document.getElementById('viewImages').textContent = images.length;
+
+    const wrapper = document.getElementById('viewSwiperWrapper');
+    wrapper.innerHTML = images.length 
+        ? images.map(src => `<div class="swiper-slide"><img src="${src}" class="w-100" style="height: 300px; object-fit: contain; background: #f8f9fa;"></div>`).join('')
+        : '<div class="swiper-slide bg-light d-flex align-items-center justify-content-center" style="height: 300px;"><i class="bi bi-image" style="font-size: 4rem; color: #dee2e6;"></i></div>';
+
+    const modal = new bootstrap.Modal(document.getElementById('viewModal'));
+    modal.show();
+
+    setTimeout(() => {
+        new Swiper('.product-swiper', {
+            loop: images.length > 1,
+            pagination: { el: '.swiper-pagination', clickable: true },
+            navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' }
+        });
+    }, 150);
+}
+
+function openDeleteModal(id, name) {
+    document.getElementById('deleteProductId').value = id;
+    document.getElementById('deleteProductName').textContent = `"${name}"`;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+function resetModal() {
+    document.getElementById('productForm').reset();
+    document.getElementById('imagePreview').innerHTML = '';
+    document.getElementById('editProductId').value = '';
+    document.getElementById('modalTitle').textContent = 'Add New Product';
+    document.querySelector('input[name="action"]').value = 'create';
+    document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-circle me-1"></i>Create Product';
+}
+
+</script>
+
 </body>
 </html>

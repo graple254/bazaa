@@ -12,7 +12,7 @@ from django.contrib import messages
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
-
+from django.core.paginator import Paginator
 from .utils import *
 
 User = get_user_model()
@@ -171,6 +171,7 @@ def shop_manager_dashboard_view(request):
 
 
 
+
 @login_required
 @shop_manager_required
 def product_management_view(request):
@@ -210,7 +211,6 @@ def product_management_view(request):
         product_id = request.POST.get("product_id")
         product = get_object_or_404(Product, id=product_id, store=store)
 
-        # basic field updates
         product.title = request.POST.get("title")
         product.caption = request.POST.get("caption")
         product.price = request.POST.get("price") or None
@@ -221,16 +221,12 @@ def product_management_view(request):
         product.calculate_discount()
         product.save()
 
-        # -----------------------------
-        # REMOVE SELECTED IMAGES
-        # -----------------------------
+        # delete images
         images_to_delete = request.POST.getlist("delete_images")
         if images_to_delete:
             ProductImage.objects.filter(id__in=images_to_delete, product=product).delete()
 
-        # -----------------------------
-        # ADD NEW IMAGES
-        # -----------------------------
+        # add images
         new_images = request.FILES.getlist("images")
         for img in new_images:
             ProductImage.objects.create(product=product, image=img)
@@ -249,19 +245,27 @@ def product_management_view(request):
     # -----------------------------
     # DEFAULT: SHOW PRODUCTS + STATS
     # -----------------------------
-    products = store.products.order_by('-created_at')
+    product_qs = store.products.order_by('-created_at')
 
     stats = {
-        "total": products.count(),
-        "active": products.filter(is_active=True).count(),
-        "inactive": products.filter(is_active=False).count(),
-        "recent": products[:5],
+        "total": product_qs.count(),
+        "active": product_qs.filter(is_active=True).count(),
+        "inactive": product_qs.filter(is_active=False).count(),
+        "recent": product_qs[:5],
     }
 
+    # -----------------------------
+    # PAGINATION
+    # -----------------------------
+    paginator = Paginator(product_qs, 10)  # 10 per page
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'files/product_management.html', {
-        "products": products,
-        "store": store,
+        "products": page_obj,   # send paginated page
+        "page_obj": page_obj,   # for template navigation
         "stats": stats,
+        "store": store,
     })
 
 

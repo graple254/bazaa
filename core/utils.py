@@ -18,7 +18,7 @@ def send_verification_email(email, code):
     # Split API key to avoid detections
     part1 = "xkeysib"
     part2 = "-65f87098e4405520b41fc9ac188abfbabd646ea947a9045a9ccde4c94795bdc8"
-    part3 = "-3FGhsXNQ5DvoX7K9"
+    part3 = "-aagjFFbYWsUuLbyS"
     api_key = part1 + part2 + part3
 
     # Configure Brevo

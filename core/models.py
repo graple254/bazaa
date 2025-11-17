@@ -1,6 +1,11 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from decimal import Decimal, InvalidOperation
+import uuid
+from io import BytesIO
+from django.core.files.base import ContentFile
+from PIL import Image
+
 # -------------------------
 # User
 # -------------------------
@@ -70,7 +75,6 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.store.name})"
-    from decimal import Decimal, InvalidOperation
 
     def calculate_discount(self):
         """Calculate percent discount if was_price and price are set."""
@@ -91,15 +95,85 @@ class Product(models.Model):
             self.percent_discount = None
 
 
-
 # -------------------------
 # Product Images
 # -------------------------
+
+
+
+def _unique_name(suffix):
+    return f"{uuid.uuid4().hex}_{suffix}.jpg"
+
+
+def _resize_and_save(uploaded_image, size):
+    if not uploaded_image:
+        return None, None
+
+    uploaded_image.open()
+    img = Image.open(uploaded_image).convert("RGB")
+    img.thumbnail(size, Image.Resampling.LANCZOS)
+
+    buffer = BytesIO()
+    img.save(buffer, format="JPEG", quality=88, optimize=True)
+    buffer.seek(0)
+
+    return _unique_name(suffix=f"{size[0]}x{size[1]}"), ContentFile(buffer.read())
+
+
 class ProductImage(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='store_products/')
-    is_primary = models.BooleanField(default=False)  # Optional, for default display
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
+
+    # original raw upload
+    image = models.ImageField(upload_to="store_products/")
+
+    # derived
+    image_large = models.ImageField(upload_to="store_products/", blank=True, null=True)
+    image_medium = models.ImageField(upload_to="store_products/", blank=True, null=True)
+    image_thumb = models.ImageField(upload_to="store_products/", blank=True, null=True)
+
+    is_primary = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    LARGE = (1200, 1200)
+    MEDIUM = (600, 600)
+    THUMB = (300, 300)
+
+    def save(self, *args, **kwargs):
+        new_upload = False
+
+        # If object is NEW → we definitely need to process
+        if not self.pk:
+            new_upload = True
+        else:
+            # Check if original image changed
+            old = ProductImage.objects.get(pk=self.pk)
+            if old.image != self.image:
+                new_upload = True
+
+        super().save(*args, **kwargs)
+
+        if new_upload:
+            self._generate_resized()
+            super().save(update_fields=["image_large", "image_medium", "image_thumb"])
+
+    def _generate_resized(self):
+        # wipe old derived files if replacing
+        if self.image_large:
+            self.image_large.delete(save=False)
+        if self.image_medium:
+            self.image_medium.delete(save=False)
+        if self.image_thumb:
+            self.image_thumb.delete(save=False)
+
+        # generate fresh
+        name, content = _resize_and_save(self.image, self.LARGE)
+        self.image_large.save(name, content, save=False)
+
+        name, content = _resize_and_save(self.image, self.MEDIUM)
+        self.image_medium.save(name, content, save=False)
+
+        name, content = _resize_and_save(self.image, self.THUMB)
+        self.image_thumb.save(name, content, save=False)
 
     def __str__(self):
         return f"Image for {self.product.title}"
