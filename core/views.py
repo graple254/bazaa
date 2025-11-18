@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
@@ -178,6 +179,24 @@ def product_management_view(request):
     store = request.user.store
 
     # -----------------------------
+    # CREATE MULTIPLE CATEGORIES
+    # -----------------------------
+    if request.method == "POST" and request.POST.get("action") == "create_categories":
+        names = request.POST.get("names", "")  # comma-separated or list
+        raw_list = [n.strip() for n in names.split(",") if n.strip()]
+
+        created_items = []
+
+        for name in raw_list:
+            category, created = Category.objects.get_or_create(
+                store=store,
+                name=name
+            )
+            created_items.append({"id": category.id, "name": category.name})
+
+        return redirect('product_management')
+
+    # -----------------------------
     # HANDLE PRODUCT CREATION
     # -----------------------------
     if request.method == "POST" and request.POST.get("action") == "create":
@@ -187,6 +206,7 @@ def product_management_view(request):
         was_price = request.POST.get("was_price")
         available_stock = request.POST.get("available_stock")
         images = request.FILES.getlist("images")
+        category_ids = request.POST.getlist("categories")  # <-- NEW
 
         product = Product.objects.create(
             store=store,
@@ -199,10 +219,16 @@ def product_management_view(request):
         product.calculate_discount()
         product.save()
 
+        # assign categories
+        if category_ids:
+            product.categories.set(category_ids)
+
+        # create images
         for img in images:
             ProductImage.objects.create(product=product, image=img)
 
         messages.success(request, "Product created successfully.")
+        return redirect('product_management')
 
     # -----------------------------
     # HANDLE PRODUCT UPDATE
@@ -221,18 +247,25 @@ def product_management_view(request):
         product.calculate_discount()
         product.save()
 
+        # update categories
+        category_ids = request.POST.getlist("categories")
+        if category_ids:
+            product.categories.set(category_ids)
+        else:
+            product.categories.clear()
+
         # delete images
         images_to_delete = request.POST.getlist("delete_images")
         if images_to_delete:
             ProductImage.objects.filter(id__in=images_to_delete, product=product).delete()
 
-        # add images
+        # add new images
         new_images = request.FILES.getlist("images")
         for img in new_images:
             ProductImage.objects.create(product=product, image=img)
 
         messages.success(request, "Product updated successfully.")
-
+        return redirect('product_management')
     # -----------------------------
     # HANDLE PRODUCT DELETE
     # -----------------------------
@@ -241,6 +274,7 @@ def product_management_view(request):
         product = get_object_or_404(Product, id=product_id, store=store)
         product.delete()
         messages.success(request, "Product deleted.")
+        return redirect('product_management')
 
     # -----------------------------
     # DEFAULT: SHOW PRODUCTS + STATS
@@ -261,11 +295,15 @@ def product_management_view(request):
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
+    
+    categories = Category.objects.filter(store=store).order_by("name")
+
     return render(request, 'files/product_management.html', {
         "products": page_obj,   # send paginated page
         "page_obj": page_obj,   # for template navigation
         "stats": stats,
         "store": store,
+        "categories": categories,
     })
 
 

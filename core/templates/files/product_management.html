@@ -31,6 +31,35 @@
             border-color: #0d6efd;
             background-color: #f8f9ff;
         }
+
+        /* Global loading overlay */
+        #globalLoader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+
+        .spinner-border-sm {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        .categories-checkbox-container {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            background: #f8f9fa;
+        }
         
         @media (max-width: 576px) {
             .product-thumb { 
@@ -41,6 +70,14 @@
     </style>
 </head>
 <body class="bg-light">
+
+<!-- Global Loading Overlay -->
+<div id="globalLoader">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2 text-muted">Saving...</p>
+</div>
 
 <header class="py-3 bg-light sticky-top">
     <div class="container">
@@ -135,55 +172,164 @@
             </div>
         </div>
     </section>
-<!-- Filters Section -->
-<section class="card border-0 shadow-sm mb-4 overflow-hidden">
-      <div class="card-body p-0">
-            <div class="p-4 bg-light">
-                  <div class="row g-4">
-                        <!-- Search Bar -->
-                        <div class="col-lg-8">
-                              <label for="searchInput" class="form-label fw-semibold mb-2">
-                                    <i class="bi bi-search text-primary me-1"></i>Search Products
-                              </label>
-                              <div class="position-relative">
-                                    <input type="search" id="searchInput" class="form-control form-control-lg ps-5 border-0 shadow-sm" 
-                                             placeholder="Find products by name, description..." 
-                                             style="border-radius: 12px;">
-                                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                              </div>
-                        </div>
 
-                        <!-- Status Filter -->
-                        <div class="col-lg-4">
-                              <label class="form-label fw-semibold mb-2">
-                                    <i class="bi bi-filter-circle text-primary me-1"></i>Filter by Status
-                              </label>
-                              <div class="d-grid gap-2">
-                                    <input type="radio" class="btn-check" name="statusOptions" id="statusAll" value="" checked>
-                                    <label class="btn btn-outline-secondary border-2 rounded-3 py-2" for="statusAll">
-                                          <i class="bi bi-grid-3x3 me-1"></i>All Products
-                                    </label>
+    <!-- Category Management Section -->
+    <section class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <!-- Category Count -->
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 60px; height: 60px;">
+                        <i class="bi bi-tags-fill text-primary fs-3"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted text-uppercase small mb-1">Categories</p>
+                        <h3 class="mb-0 text-primary">{{ store.categories.count }}</h3>
+                    </div>
+                </div>
 
-                                    <div class="row g-2">
-                                          <div class="col-6">
-                                                <input type="radio" class="btn-check" name="statusOptions" id="statusActive" value="active">
-                                                <label class="btn btn-outline-success border-2 rounded-3 py-2 w-100" for="statusActive">
-                                                      <i class="bi bi-check-circle-fill me-1"></i>Active
-                                                </label>
-                                          </div>
-                                          <div class="col-6">
-                                                <input type="radio" class="btn-check" name="statusOptions" id="statusInactive" value="inactive">
-                                                <label class="btn btn-outline-secondary border-2 rounded-3 py-2 w-100" for="statusInactive">
-                                                      <i class="bi bi-pause-circle-fill me-1"></i>Inactive
-                                                </label>
-                                          </div>
-                                    </div>
-                              </div>
-                        </div>
-                  </div>
+                <!-- Buttons -->
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-outline-primary rounded-3 px-4 py-2"
+                            data-bs-toggle="modal" data-bs-target="#viewCategoriesModal">
+                        <i class="bi bi-eye-fill me-1"></i> View Categories
+                    </button>
+
+                    <button class="btn btn-primary rounded-3 px-4 py-2"
+                            data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                        <i class="bi bi-plus-lg me-1"></i> Add Category
+                    </button>
+                </div>
             </div>
-      </div>
-</section>
+        </div>
+    </section>
+
+    <!-- View Categories Modal -->
+    <div class="modal fade" id="viewCategoriesModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content rounded-4 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Your Categories</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    {% if store.categories.all %}
+                    <ul class="list-group">
+                        {% for c in store.categories.all %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>{{ c.name }}</span>
+                            <span class="badge bg-light text-muted">{{ c.created_at|date:"M d, Y" }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted text-center">No categories have been added yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div class="modal fade" id="addCategoryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content rounded-4 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Add Categories</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create_categories">
+
+                    <div class="modal-body">
+                        <label class="fw-semibold mb-2">Category Names</label>
+                        <input type="text" 
+                               class="form-control form-control-lg rounded-3"
+                               name="names"
+                               placeholder="e.g. Shoes, Hoodies, Kids Wear">
+
+                        <small class="text-muted d-block mt-2">
+                            Add multiple categories by separating them with commas.
+                        </small>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary rounded-3 px-4">
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <section class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="p-4 bg-light">
+                <div class="row g-4">
+                    <!-- Search Bar -->
+                    <div class="col-lg-6">
+                        <label for="searchInput" class="form-label fw-semibold mb-2">
+                            <i class="bi bi-search text-primary me-1"></i>Search Products
+                        </label>
+                        <div class="position-relative">
+                            <input type="search" id="searchInput" class="form-control form-control-lg ps-5 border-0 shadow-sm" 
+                                     placeholder="Find products by name, description..." 
+                                     style="border-radius: 12px;">
+                            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                        </div>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="col-lg-3">
+                        <label class="form-label fw-semibold mb-2">
+                            <i class="bi bi-tags text-primary me-1"></i>Filter by Category
+                        </label>
+                        <select class="form-select form-select-lg border-0 shadow-sm" id="categoryFilter" style="border-radius: 12px;">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div class="col-lg-3">
+                        <label class="form-label fw-semibold mb-2">
+                            <i class="bi bi-filter-circle text-primary me-1"></i>Filter by Status
+                        </label>
+                        <div class="d-grid gap-2">
+                            <input type="radio" class="btn-check" name="statusOptions" id="statusAll" value="" checked>
+                            <label class="btn btn-outline-secondary border-2 rounded-3 py-2" for="statusAll">
+                                <i class="bi bi-grid-3x3 me-1"></i>All Products
+                            </label>
+
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="statusOptions" id="statusActive" value="active">
+                                    <label class="btn btn-outline-success border-2 rounded-3 py-2 w-100" for="statusActive">
+                                        <i class="bi bi-check-circle-fill me-1"></i>Active
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="statusOptions" id="statusInactive" value="inactive">
+                                    <label class="btn btn-outline-secondary border-2 rounded-3 py-2 w-100" for="statusInactive">
+                                        <i class="bi bi-pause-circle-fill me-1"></i>Inactive
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Products Table -->
     <section class="card border-0 shadow-sm overflow-hidden">
@@ -206,6 +352,7 @@
                             <th class="ps-4 py-3 fw-semibold">PRODUCT</th>
                             <th class="py-3 fw-semibold">PRICING</th>
                             <th class="py-3 fw-semibold">STOCK</th>
+                            <th class="py-3 fw-semibold">CATEGORIES</th>
                             <th class="py-3 fw-semibold">STATUS</th>
                             <th class="py-3 fw-semibold">ENGAGEMENT</th>
                             <th class="text-end pe-4 py-3 fw-semibold">ACTIONS</th>
@@ -214,7 +361,7 @@
                     <tbody id="productsTableBody">
                         {% if products %}
                             {% for product in products %}
-                            <tr class="border-bottom" data-product-id="{{ product.id }}" data-status="{% if product.is_active %}active{% else %}inactive{% endif %}">
+                            <tr class="border-bottom" data-product-id="{{ product.id }}" data-status="{% if product.is_active %}active{% else %}inactive{% endif %}" data-categories="{% for category in product.categories.all %}{{ category.id }},{% endfor %}">
                                 <td class="ps-4 py-3">
                                     <div class="d-flex align-items-center gap-3">
                                         {% with product.images.first as primary_image %}
@@ -262,6 +409,17 @@
                                     {% endif %}
                                 </td>
                                 <td class="py-3">
+                                    {% if product.categories.all %}
+                                        <div class="d-flex flex-wrap gap-1">
+                                            {% for category in product.categories.all %}
+                                                <span class="badge bg-primary bg-opacity-10 text-primary">{{ category.name }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted small">No categories</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3">
                                     {% if product.is_active %}
                                         <span class="badge bg-success px-3 py-2"><i class="bi bi-check-circle me-1"></i>Active</span>
                                     {% else %}
@@ -291,7 +449,7 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="6" class="text-center py-5">
+                                <td colspan="7" class="text-center py-5">
                                     <div class="py-5">
                                         <div class="mb-4">
                                             <i class="bi bi-box-seam text-muted" style="font-size: 4rem;"></i>
@@ -338,112 +496,130 @@
     </section>
 </main>
 
-
 <!-- Add/Edit Modal -->
 <div class="modal fade" id="addEditModal" tabindex="-1">
-      <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                  <div class="modal-header bg-light">
-                        <div>
-                              <h5 class="modal-title fw-bold" id="modalTitle">Add New Product</h5>
-                              <p class="text-muted small mb-0">Fill in the product details below</p>
-                        </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                  </div>
-                  <form method="POST" enctype="multipart/form-data" id="productForm">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="create">
-                        <input type="hidden" name="product_id" id="editProductId">
-                        
-                        <!-- Reduced max-height to give footer more room on small screens -->
-                        <div class="modal-body overflow-auto" style="max-height: calc(100vh - 250px);">
-                              <div class="row g-4">
-                                    <!-- Left Column: Product Details -->
-                                    <div class="col-md-7">
-                                          <div class="mb-3">
-                                                <label class="form-label fw-semibold">Product Title <span class="text-danger">*</span></label>
-                                                <input type="text" name="title" id="inputTitle" class="form-control" placeholder="Enter product name" required>
-                                          </div>
-                                          
-                                          <div class="mb-3">
-                                                <label class="form-label fw-semibold">Description</label>
-                                                <textarea name="caption" id="inputCaption" class="form-control" rows="3" placeholder="Describe your product features, benefits, etc."></textarea>
-                                                <div class="form-text">Optional: Add detailed product description</div>
-                                          </div>
-
-                                          <div class="row g-2 mb-3">
-                                                <div class="col-sm-6">
-                                                      <label class="form-label fw-semibold">Current Price (KES)</label>
-                                                      <div class="input-group">
-                                                            <span class="input-group-text bg-light">KES</span>
-                                                            <input type="number" name="price" id="inputPrice" step="0.01" min="0" class="form-control" placeholder="0.00">
-                                                      </div>
-                                                </div>
-                                                <div class="col-sm-6">
-                                                      <label class="form-label fw-semibold">Original Price (KES)</label>
-                                                      <div class="input-group">
-                                                            <span class="input-group-text bg-light">KES</span>
-                                                            <input type="number" name="was_price" id="inputWasPrice" step="0.01" min="0" class="form-control" placeholder="0.00">
-                                                      </div>
-                                                      <div class="form-text">For showing discounts</div>
-                                                </div>
-                                          </div>
-
-                                          <div class="mb-3">
-                                                <label class="form-label fw-semibold">Available Stock</label>
-                                                <div class="input-group">
-                                                      <span class="input-group-text bg-light"><i class="bi bi-box-seam"></i></span>
-                                                      <input type="number" name="available_stock" id="inputStock" class="form-control" min="0" value="0" placeholder="Enter quantity">
-                                                      <span class="input-group-text bg-light">units</span>
-                                                </div>
-                                          </div>
-
-                                          <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" role="switch" name="is_active" id="inputActive" checked>
-                                                <label class="form-check-label fw-semibold" for="inputActive">
-                                                      <i class="bi bi-eye me-1"></i>Publish Product (Make it visible)
-                                                </label>
-                                          </div>
-                                    </div>
-
-                                    <!-- Right Column: Image Upload -->
-                                    <div class="col-md-5">
-                                          <div class="card h-100">
-                                                <div class="card-body d-flex flex-column">
-                                                      <label class="form-label fw-semibold mb-3">
-                                                            <i class="bi bi-images me-1"></i>Product Images
-                                                      </label>
-                                                      
-                                                      <div class="upload-area flex-grow-1 d-flex flex-column align-items-center justify-content-center text-center mb-3 p-3 rounded" id="uploadArea">
-                                                            <i class="bi bi-cloud-upload fs-1 text-primary mb-2"></i>
-                                                            <p class="mb-2 fw-semibold">Click to upload or drag and drop</p>
-                                                            <p class="text-muted small mb-0">PNG, JPG, WEBP (Max 5MB each)</p>
-                                                      </div>
-
-                                                      <input type="file" name="images" id="inputImages" class="d-none" accept="image/*" multiple>
-                                                      <button type="button" class="btn btn-outline-primary w-100" id="chooseImagesBtn">
-                                                            <i class="bi bi-plus-circle me-2"></i>Choose Images
-                                                      </button>
-
-                                                      <!-- Image Preview Grid -->
-                                                      <div id="imagePreview" class="row row-cols-3 g-2 mt-3"></div>
-                                                </div>
-                                          </div>
-                                    </div>
-                              </div>
-                        </div>
-
-                        <div class="modal-footer bg-light">
-                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                    <i class="bi bi-x-circle me-1"></i>Cancel
-                              </button>
-                              <button type="submit" class="btn btn-primary" id="submitBtn">
-                                    <i class="bi bi-check-circle me-1"></i>Create Product
-                              </button>
-                        </div>
-                  </form>
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <div>
+                    <h5 class="modal-title fw-bold" id="modalTitle">Add New Product</h5>
+                    <p class="text-muted small mb-0">Fill in the product details below</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-      </div>
+            <form method="POST" enctype="multipart/form-data" id="productForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" id="formAction" value="create">
+                <input type="hidden" name="product_id" id="editProductId">
+                
+                <div class="modal-body overflow-auto" style="max-height: calc(100vh - 250px);">
+                    <div class="row g-4">
+                        <!-- Left Column: Product Details -->
+                        <div class="col-md-7">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Product Title <span class="text-danger">*</span></label>
+                                <input type="text" name="title" id="inputTitle" class="form-control" placeholder="Enter product name" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Description</label>
+                                <textarea name="caption" id="inputCaption" class="form-control" rows="3" placeholder="Describe your product features, benefits, etc."></textarea>
+                                <div class="form-text">Optional: Add detailed product description</div>
+                            </div>
+
+                            <!-- Categories Field - UPDATED WITH CHECKBOXES -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Categories</label>
+                                <div class="categories-checkbox-container">
+                                    {% if categories %}
+                                        {% for category in categories %}
+                                        <div class="form-check">
+                                            <input class="form-check-input category-checkbox" type="checkbox" name="categories" value="{{ category.id }}" id="category_{{ category.id }}">
+                                            <label class="form-check-label" for="category_{{ category.id }}">
+                                                {{ category.name }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-muted">No categories available. <a href="#" data-bs-toggle="modal" data-bs-target="#addCategoryModal">Create some categories first</a>.</p>
+                                    {% endif %}
+                                </div>
+                                <div class="form-text">Select one or more categories for this product</div>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-sm-6">
+                                    <label class="form-label fw-semibold">Current Price (KES)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">KES</span>
+                                        <input type="number" name="price" id="inputPrice" step="0.01" min="0" class="form-control" placeholder="0.00">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label fw-semibold">Original Price (KES)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">KES</span>
+                                        <input type="number" name="was_price" id="inputWasPrice" step="0.01" min="0" class="form-control" placeholder="0.00">
+                                    </div>
+                                    <div class="form-text">For showing discounts</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Available Stock</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-box-seam"></i></span>
+                                    <input type="number" name="available_stock" id="inputStock" class="form-control" min="0" value="0" placeholder="Enter quantity">
+                                    <span class="input-group-text bg-light">units</span>
+                                </div>
+                            </div>
+
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" name="is_active" id="inputActive" checked>
+                                <label class="form-check-label fw-semibold" for="inputActive">
+                                    <i class="bi bi-eye me-1"></i>Publish Product (Make it visible)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Image Upload -->
+                        <div class="col-md-5">
+                            <div class="card h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <label class="form-label fw-semibold mb-3">
+                                        <i class="bi bi-images me-1"></i>Product Images
+                                    </label>
+                                    
+                                    <div class="upload-area flex-grow-1 d-flex flex-column align-items-center justify-content-center text-center mb-3 p-3 rounded" id="uploadArea">
+                                        <i class="bi bi-cloud-upload fs-1 text-primary mb-2"></i>
+                                        <p class="mb-2 fw-semibold">Click to upload or drag and drop</p>
+                                        <p class="text-muted small mb-0">PNG, JPG, WEBP (Max 5MB each)</p>
+                                    </div>
+
+                                    <input type="file" name="images" id="inputImages" class="d-none" accept="image/*" multiple>
+                                    <button type="button" class="btn btn-outline-primary w-100" id="chooseImagesBtn">
+                                        <i class="bi bi-plus-circle me-2"></i>Choose Images
+                                    </button>
+
+                                    <!-- Image Preview Grid -->
+                                    <div id="imagePreview" class="row row-cols-3 g-2 mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="bi bi-check-circle me-1"></i>Create Product
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- View Product Modal -->
@@ -481,6 +657,12 @@
                                 <span id="viewStatus"></span>
                             </div>
                             <p id="viewCaption" class="text-muted mb-0"></p>
+                        </div>
+
+                        <!-- Categories Display -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Categories</label>
+                            <div id="viewCategories" class="d-flex flex-wrap gap-2"></div>
                         </div>
 
                         <div class="card bg-light mb-3">
@@ -557,11 +739,11 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-1"></i>Cancel
                     </button>
-                    <form method="POST" class="d-inline">
+                    <form method="POST" class="d-inline" id="deleteForm">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="product_id" id="deleteProductId">
-                        <button type="submit" class="btn btn-danger">
+                        <button type="submit" class="btn btn-danger" id="deleteConfirmBtn">
                             <i class="bi bi-trash me-1"></i>Delete Permanently
                         </button>
                     </form>
@@ -579,10 +761,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Search & Filter
     const searchInput = document.getElementById('searchInput');
-    const clearFilters = document.getElementById('clearFilters');
+    const categoryFilter = document.getElementById('categoryFilter');
     
     if (searchInput) searchInput.addEventListener('input', filterTable);
-    if (clearFilters) clearFilters.addEventListener('click', clearAllFilters);
+    if (categoryFilter) categoryFilter.addEventListener('change', filterTable);
     
     document.querySelectorAll('input[name="statusOptions"]').forEach(radio => {
         radio.addEventListener('change', filterTable);
@@ -627,6 +809,17 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', () => openDeleteModal(btn.dataset.product, btn.dataset.productName));
     });
 
+    // Form submission handlers
+    const productForm = document.getElementById('productForm');
+    if (productForm) {
+        productForm.addEventListener('submit', handleFormSubmit);
+    }
+
+    const deleteForm = document.getElementById('deleteForm');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', handleDeleteSubmit);
+    }
+
     // Modal reset
     const addEditModal = document.getElementById('addEditModal');
     if (addEditModal) {
@@ -649,19 +842,25 @@ function handleDrop(e) {
 function filterTable() {
     const query = document.getElementById('searchInput').value.toLowerCase();
     const status = document.querySelector('input[name="statusOptions"]:checked').value;
+    const category = document.getElementById('categoryFilter').value;
     
     document.querySelectorAll('#productsTableBody tr[data-product-id]').forEach(row => {
         const title = row.querySelector('.fw-semibold').textContent.toLowerCase();
         const desc = row.querySelector('.text-muted').textContent.toLowerCase();
         const rowStatus = row.dataset.status;
+        const rowCategories = row.dataset.categories || '';
+        
         const matchesSearch = title.includes(query) || desc.includes(query);
         const matchesStatus = !status || rowStatus === status;
-        row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+        const matchesCategory = !category || rowCategories.includes(category);
+        
+        row.style.display = (matchesSearch && matchesStatus && matchesCategory) ? '' : 'none';
     });
 }
 
 function clearAllFilters() {
     document.getElementById('searchInput').value = '';
+    document.getElementById('categoryFilter').value = '';
     document.querySelectorAll('input[name="statusOptions"]').forEach(radio => {
         if (radio.value === '') radio.checked = true;
     });
@@ -705,6 +904,9 @@ function openEditModal(id) {
     const stockElement = row.querySelector('.product-stock-badge');
     const stock = stockElement ? stockElement.textContent.replace(' units', '').replace('Out of stock', '0').trim() : '0';
     const isActive = row.dataset.status === 'active';
+    
+    // Get categories
+    const categoryIds = row.dataset.categories ? row.dataset.categories.split(',').filter(id => id) : [];
 
     document.getElementById('modalTitle').textContent = 'Edit Product';
     document.getElementById('editProductId').value = id;
@@ -714,11 +916,19 @@ function openEditModal(id) {
     document.getElementById('inputWasPrice').value = wasPrice;
     document.getElementById('inputStock').value = stock;
     document.getElementById('inputActive').checked = isActive;
-    document.querySelector('input[name="action"]').value = 'edit';
+    
+    // CRITICAL FIX: Update the action field to 'edit'
+    document.getElementById('formAction').value = 'edit';
     document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-circle me-1"></i>Update Product';
+
+    // Set categories checkboxes
+    document.querySelectorAll('.category-checkbox').forEach(checkbox => {
+        checkbox.checked = categoryIds.includes(checkbox.value);
+    });
 
     new bootstrap.Modal(document.getElementById('addEditModal')).show();
 }
+
 function openViewModal(id) {
     const row = document.querySelector(`tr[data-product-id="${id}"]`);
     if (!row) return;
@@ -737,6 +947,10 @@ function openViewModal(id) {
     // Get stock specifically from the stock cell
     const stockElement = row.querySelector('td:nth-child(3) .badge');
     const stockText = stockElement ? stockElement.textContent.trim() : '0 units';
+    
+    // Get categories
+    const categoriesContainer = row.querySelector('td:nth-child(4)');
+    const categoriesHTML = categoriesContainer ? categoriesContainer.innerHTML : '<span class="text-muted small">No categories</span>';
     
     const images = Array.from(row.querySelectorAll('.product-images-data img')).map(img => img.src);
     const likes = row.querySelector('i.bi-heart-fill')?.parentElement?.textContent.trim().split(' ')[0] || 0;
@@ -759,6 +973,7 @@ function openViewModal(id) {
     document.getElementById('viewLikes').textContent = likes;
     document.getElementById('viewComments').textContent = comments;
     document.getElementById('viewImages').textContent = images.length;
+    document.getElementById('viewCategories').innerHTML = categoriesHTML;
 
     const wrapper = document.getElementById('viewSwiperWrapper');
     wrapper.innerHTML = images.length 
@@ -788,9 +1003,90 @@ function resetModal() {
     document.getElementById('imagePreview').innerHTML = '';
     document.getElementById('editProductId').value = '';
     document.getElementById('modalTitle').textContent = 'Add New Product';
-    document.querySelector('input[name="action"]').value = 'create';
+    
+    // CRITICAL FIX: Reset action to 'create'
+    document.getElementById('formAction').value = 'create';
     document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-circle me-1"></i>Create Product';
+    
+    // Clear category checkboxes
+    document.querySelectorAll('.category-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
 }
+
+// New functions for loading states
+function handleFormSubmit(e) {
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Prevent double submission
+    if (submitBtn.disabled) {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Show loading state on button
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving...';
+    submitBtn.disabled = true;
+    
+    // Show global loader
+    showGlobalLoader();
+    
+    return true;
+}
+
+function handleDeleteSubmit(e) {
+    const deleteBtn = document.getElementById('deleteConfirmBtn');
+    
+    // Prevent double submission
+    if (deleteBtn.disabled) {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Show loading state on button
+    deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Deleting...';
+    deleteBtn.disabled = true;
+    
+    // Show global loader
+    showGlobalLoader();
+    
+    return true;
+}
+
+function showGlobalLoader() {
+    const loader = document.getElementById('globalLoader');
+    if (loader) {
+        loader.style.display = 'flex';
+    }
+}
+
+function resetFormButtons() {
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        const action = document.querySelector('input[name="action"]')?.value;
+        submitBtn.innerHTML = action === 'create' 
+            ? '<i class="bi bi-check-circle me-1"></i>Create Product'
+            : '<i class="bi bi-check-circle me-1"></i>Update Product';
+    }
+    
+    const deleteBtn = document.getElementById('deleteConfirmBtn');
+    if (deleteBtn) {
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete Permanently';
+    }
+    
+    // Hide global loader if it's still showing
+    const loader = document.getElementById('globalLoader');
+    if (loader) {
+        loader.style.display = 'none';
+    }
+}
+
+// Hide global loader when page loads (in case it was left showing)
+window.addEventListener('load', function() {
+    resetFormButtons();
+});
 
 </script>
 

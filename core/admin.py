@@ -68,6 +68,13 @@ class ProductImageInline(admin.TabularInline):
     fields = ('image', 'is_primary', 'created_at')
 
 
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('store', 'name', 'created_at')
+    search_fields = ('name',)
+    ordering = ('name',)
+
+
 # -----------------------------
 # Product Admin
 # -----------------------------

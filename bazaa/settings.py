@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-##^^1sc7to8n15b^dmsclkvb^7prfsf*5j&8oi7u+&m*s0-qjk
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://16b9d2e1a4fb.ngrok-free.app']
+CSRF_TRUSTED_ORIGINS = ['https://5ed61699ec9e.ngrok-free.app']
 
 AUTH_USER_MODEL = 'core.User'
 # Application definition

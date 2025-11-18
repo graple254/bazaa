@@ -59,6 +59,22 @@ class Store(models.Model):
         return base_link
 
 
+class Category(models.Model):
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='categories')
+    name = models.CharField(max_length=120)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+        unique_together = ('store', 'name')  # category name is unique per store
+
+    def __str__(self):
+        return self.name
+
+
+
+
 # -------------------------
 # Product
 # -------------------------
@@ -71,6 +87,7 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True)
     available_stock = models.PositiveIntegerField(default=0, blank=True, null=True)
     percent_discount = models.PositiveIntegerField(blank=True, null=True)
+    categories = models.ManyToManyField(Category, related_name='products', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
