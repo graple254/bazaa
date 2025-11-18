@@ -901,8 +901,20 @@ function openEditModal(id) {
     const price = priceElement ? priceElement.textContent.replace('KES ', '').replace(/,/g, '').trim() : '';
     const wasPriceElement = row.querySelector('.text-decoration-line-through');
     const wasPrice = wasPriceElement ? wasPriceElement.textContent.replace('KES ', '').replace(/,/g, '').trim() : '';
-    const stockElement = row.querySelector('.product-stock-badge');
-    const stock = stockElement ? stockElement.textContent.replace(' units', '').replace('Out of stock', '0').trim() : '0';
+    
+    // FIX: Get stock count properly
+    const stockElement = row.querySelector('td:nth-child(3) .badge');
+    let stock = '0';
+    if (stockElement) {
+        const stockText = stockElement.textContent.trim();
+        if (stockText.includes('Out of stock')) {
+            stock = '0';
+        } else {
+            // Extract numbers from text like "5 units"
+            stock = stockText.replace(' units', '').trim();
+        }
+    }
+    
     const isActive = row.dataset.status === 'active';
     
     // Get categories
@@ -914,7 +926,7 @@ function openEditModal(id) {
     document.getElementById('inputCaption').value = caption !== 'No description' ? caption : '';
     document.getElementById('inputPrice').value = price;
     document.getElementById('inputWasPrice').value = wasPrice;
-    document.getElementById('inputStock').value = stock;
+    document.getElementById('inputStock').value = stock; // THIS WAS MISSING - NOW FIXED
     document.getElementById('inputActive').checked = isActive;
     
     // CRITICAL FIX: Update the action field to 'edit'

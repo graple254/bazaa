@@ -291,7 +291,7 @@ def product_management_view(request):
     # -----------------------------
     # PAGINATION
     # -----------------------------
-    paginator = Paginator(product_qs, 10)  # 10 per page
+    paginator = Paginator(product_qs, 7)  # 10 per page
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
