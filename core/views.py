@@ -134,6 +134,7 @@ def login_view(request):
             return render(request, "files/login.html")
 
         login(request, user)
+        messages.success(request, "Successfully logged in.")
         return redirect("dashboard")
 
     return render(request, "files/login.html")
@@ -151,24 +152,147 @@ def logout_view(request):
 
 
 
-
 @login_required
 @shop_manager_required
 def shop_manager_dashboard_view(request):
-    # Ensure store exists
+
     if not hasattr(request.user, 'store'):
         messages.info(request, "Please create your store profile first.")
         return redirect('create_store_profile')
 
     store = request.user.store
-    # Fetch 5 most recent products
-    recent_products = store.products.order_by('-created_at')[:5]
 
+    # ---------------------------------------------------------
+    # PRODUCT + CATEGORY STATS
+    # ---------------------------------------------------------
+    products = store.products.all()
+    categories = store.categories.all()
+
+    product_stats = {
+        "total": products.count(),
+        "active": products.filter(is_active=True).count(),
+        "inactive": products.filter(is_active=False).count(),
+        "with_stock": products.filter(available_stock__gt=0).count(),
+        "low_stock": products.filter(available_stock__lte=3, available_stock__gt=0).count(),
+    }
+
+    recent_products = products.order_by('-created_at')[:3]
+    category_count = categories.count()
+
+    # ---------------------------------------------------------
+    # ANNOUNCEMENTS
+    # ---------------------------------------------------------
+    announcements = store.announcements.order_by('-created_at')
+    paginator = Paginator(announcements, 3)  # At least 3 per page
+    page_number = request.GET.get('announcement_page')
+    announcements_page_obj = paginator.get_page(page_number)
+    announcement_count = announcements.count()
+    active_announcements = announcements.filter(is_active=True).count()
+
+    global_announcements = Announcement_Global_For_All_Store.objects.filter(
+        is_active=True
+    ).order_by('-created_at')
+
+    # ---------------------------------------------------------
+    # CREATE STORE ANNOUNCEMENT
+    # ---------------------------------------------------------
+    if request.method == "POST" and request.POST.get("action") == "create_store_announcement":
+
+        title = request.POST.get("title")
+        message_body = request.POST.get("message")
+        status = request.POST.get("is_active") == "on"
+
+        if not title or not message_body:
+            messages.error(request, "Both fields are required.")
+            return redirect("dashboard")
+
+        Announcement_Store.objects.create(
+            store=store,
+            title=title,
+            message=message_body,
+            is_active=status
+        )
+
+        messages.success(request, "Announcement created.")
+        return redirect("dashboard")
+
+    # ---------------------------------------------------------
+    # EDIT STORE ANNOUNCEMENT
+    # ---------------------------------------------------------
+    if request.method == "POST" and request.POST.get("action") == "edit_store_announcement":
+
+        ann_id = request.POST.get("announcement_id")
+        ann = get_object_or_404(Announcement_Store, id=ann_id, store=store)
+
+        ann.title = request.POST.get("title")
+        ann.message = request.POST.get("message")
+        ann.is_active = request.POST.get("is_active") == "on"
+
+        ann.save()
+
+        messages.success(request, "Announcement updated.")
+        return redirect("dashboard")
+
+    # ---------------------------------------------------------
+    # TOGGLE ACTIVE/INACTIVE
+    # ---------------------------------------------------------
+    if request.method == "POST" and request.POST.get("action") == "toggle_status":
+
+        ann_id = request.POST.get("announcement_id")
+        ann = get_object_or_404(Announcement_Store, id=ann_id, store=store)
+
+        ann.is_active = not ann.is_active
+        ann.save()
+
+        messages.success(request, "Status updated.")
+        return redirect("dashboard")
+
+    # ---------------------------------------------------------
+    # STORE PROFILE UPDATE
+    # ---------------------------------------------------------
+    if request.method == "POST" and request.POST.get("action") == "update_store":
+        new_name = request.POST.get("name")
+        new_desc = request.POST.get("description")
+        new_whatsapp = request.POST.get("whatsapp_number")
+        new_sub = request.POST.get("subdomain")
+        new_logo = request.FILES.get("logo")
+
+        if new_sub and new_sub != store.subdomain:
+            if Store.objects.filter(subdomain=new_sub).exclude(id=store.id).exists():
+                messages.error(request, "Subdomain already in use.")
+                return redirect("dashboard")
+
+        store.name = new_name
+        store.description = new_desc
+        store.whatsapp_number = new_whatsapp
+        store.subdomain = new_sub
+
+        if new_logo:
+            store.logo = new_logo
+
+        store.save()
+
+        messages.success(request, "Store updated.")
+        return redirect("dashboard")
+
+    # ---------------------------------------------------------
+    # CONTEXT
+    # ---------------------------------------------------------
     context = {
         "store": store,
+        "product_stats": product_stats,
+        "category_count": category_count,
         "recent_products": recent_products,
+        "categories": categories,
+        "announcements": announcements,
+        "announcement_count": announcement_count,
+        "active_announcements": active_announcements,
+        "global_announcements": global_announcements,
+        "announcements_page_obj": announcements_page_obj,
     }
+
     return render(request, 'files/shop_manager_dashboard.html', context)
+
 
 
 
@@ -194,6 +318,7 @@ def product_management_view(request):
             )
             created_items.append({"id": category.id, "name": category.name})
 
+        messages.success(request, f"Created {len(created_items)} categories.")
         return redirect('product_management')
 
     # -----------------------------

@@ -112,7 +112,53 @@
     </div>
 </header>
 
-<main class="container py-4">
+
+
+<!----Notification Container-->
+
+<!-- Toast Notifications -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} border-0" 
+         role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+        <div class="d-flex">
+            <div class="toast-body">
+                <div class="d-flex align-items-center">
+                    <i class="bi 
+                        {% if message.tags == 'success' %}bi-check-circle-fill
+                        {% elif message.tags == 'error' or message.tags == 'danger' %}bi-exclamation-circle-fill
+                        {% elif message.tags == 'warning' %}bi-exclamation-triangle-fill
+                        {% elif message.tags == 'info' %}bi-info-circle-fill
+                        {% else %}bi-bell-fill{% endif %} 
+                        me-2"></i>
+                    {{ message }}
+                </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+// Auto-show toast notifications when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function(toastEl) {
+        return new bootstrap.Toast(toastEl);
+    });
+    
+    toastList.forEach(function(toast) {
+        toast.show();
+    });
+});
+</script>
+
+
+<!--End Of Notification Container -->
+
+
+<main class="container py-4" style="padding-bottom: 120px !important;">
     <!-- Header Section -->
     <div class="row g-3 align-items-stretch mb-4">
         <div class="col-12 col-lg">
@@ -1101,6 +1147,77 @@ window.addEventListener('load', function() {
 });
 
 </script>
+
+
+
+<!-- Bottom Navigation for Mobile -->
+<div class="d-block d-lg-none">
+    
+    <nav class="navbar navbar-light bg-white border shadow-lg" style="
+        position: fixed;
+        bottom: 20px;
+        left: 16px;
+        right: 16px;
+        border-radius: 24px;
+        padding: 12px 0;
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.98) !important;
+        z-index: 1030;
+    ">
+        <div class="container-fluid px-4">
+            <div class="d-flex justify-content-around align-items-center w-100">
+                
+                <!-- Dashboard -->
+                <a class="nav-link text-center position-relative" href="{% url 'dashboard' %}" style="flex: 1; text-decoration: none;">
+                    <div class="d-flex flex-column align-items-center gap-1">
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" 
+                             style="width: 48px; height: 48px; transition: all 0.3s ease;">
+                            <i class="bi bi-speedometer2 fs-5 text-secondary"></i>
+                        </div>
+                        <small class="text-secondary fw-medium" style="font-size: 0.7rem;">Dashboard</small>
+                    </div>
+                </a>
+                
+                <!-- Products (Active) -->
+                <a class="nav-link text-center position-relative" href="{% url 'product_management' %}" style="flex: 1; text-decoration: none;">
+                    <div class="d-flex flex-column align-items-center gap-1">
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center shadow" 
+                             style="width: 56px; height: 56px; transition: all 0.3s ease; margin-top: -8px;">
+                            <i class="bi bi-box-seam fs-4 text-white"></i>
+                        </div>
+                        <small class="text-primary fw-bold" style="font-size: 0.7rem;">Products</small>
+                    </div>
+                </a>
+                
+                <!-- Profile -->
+                <a class="nav-link text-center position-relative" href="{% url 'create_store_profile' %}" style="flex: 1; text-decoration: none;">
+                    <div class="d-flex flex-column align-items-center gap-1">
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" 
+                             style="width: 48px; height: 48px; transition: all 0.3s ease;">
+                            <i class="bi bi-person fs-5 text-secondary"></i>
+                        </div>
+                        <small class="text-secondary fw-medium" style="font-size: 0.7rem;">Profile</small>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </nav>
+</div>
+
+<style>
+    /* Mobile nav hover effects */
+    @media (max-width: 991.98px) {
+        .navbar .nav-link:hover .rounded-circle {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .navbar .nav-link:active .rounded-circle {
+            transform: translateY(0);
+        }
+    }
+</style>
+
 
 </body>
 </html>

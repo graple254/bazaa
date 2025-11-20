@@ -2,67 +2,1156 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Shop Manager Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Bootstrap 5 CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - {{ store.name }}</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --border-radius: 0.75rem;
+            --card-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --hover-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        .dashboard-navbar {
+            border-radius: 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 0.75rem 0;
+        }
+        
+        .stat-card {
+            transition: all 0.2s ease;
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            height: 100%;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .card {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+        }
+        
+        .card-header {
+            background: white;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 1rem 1.25rem;
+        }
+        
+        .product-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .announcement-item {
+            transition: background-color 0.15s ease;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .announcement-item:hover {
+            background-color: rgba(0,0,0,0.02);
+        }
+        
+        .announcement-actions {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .announcement-item:hover .announcement-actions {
+            opacity: 1;
+        }
+        
+        .store-logo-preview {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+        
+        .welcome-card {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: white;
+            border-radius: var(--border-radius);
+        }
+        
+        .quick-action-btn {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+        
+        .quick-action-btn:hover {
+            background-color: rgba(0,0,0,0.03);
+            transform: translateY(-1px);
+        }
+        
+        /* Improved Modal Styles */
+        .settings-modal .modal-content {
+            border-radius: var(--border-radius);
+            border: none;
+        }
+        
+        .settings-modal .modal-header {
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            padding: 1.5rem;
+        }
+        
+        .settings-modal .modal-body {
+            padding: 0;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .settings-modal .modal-footer {
+            border-top: 1px solid rgba(0,0,0,0.08);
+            padding: 1.25rem 1.5rem;
+        }
+        
+        .form-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+        }
+        
+        .form-section-header {
+            margin-bottom: 1.25rem;
+        }
+        
+        .logo-upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.2s ease;
+            background: #f8f9fa;
+        }
+        
+        .logo-upload-area:hover {
+            border-color: #0d6efd;
+            background: #f0f7ff;
+        }
+        
+        .logo-preview-small {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            padding: 0.625rem 0.75rem;
+            transition: all 0.2s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-navbar {
+                padding: 0.5rem 0;
+            }
+            
+            .announcement-actions {
+                opacity: 1;
+            }
+            
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .settings-modal .modal-header,
+            .settings-modal .form-section {
+                padding: 1.25rem;
+            }
+        }
+    </style>
 </head>
-<body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<body class="bg-light">
+
+
+<header class="py-3 bg-light sticky-top">
     <div class="container">
-        <a class="navbar-brand" href="#">Bazaa Digital</a>
+        <nav class="navbar navbar-expand-lg bg-white shadow-sm px-3 py-2 rounded-3">
+            <a class="navbar-brand fw-semibold" href="{% url 'dashboard' %}">
+                <i class="bi bi-shop me-2 text-primary"></i>{{ store.name }}
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item me-lg-2">
+                        <a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-house-door me-1"></i>Dashboard</a>
+                    </li>
+                    <li class="nav-item me-lg-2">
+                        <a class="nav-link active" href="{% url 'product_management' %}"><i class="bi bi-box-seam me-1"></i>Products</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>{{ request.user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#storeProfileModal">
+                                <i class="bi bi-gear me-1"></i>Store Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right me-1"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+</header>
+
+
+<!----Notification Container-->
+
+<!-- Toast Notifications -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} border-0" 
+         role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
         <div class="d-flex">
-            <span class="navbar-text me-3">Logged in as {{ request.user.username }}</span>
-            <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Logout</a>
+            <div class="toast-body">
+                <div class="d-flex align-items-center">
+                    <i class="bi 
+                        {% if message.tags == 'success' %}bi-check-circle-fill
+                        {% elif message.tags == 'error' or message.tags == 'danger' %}bi-exclamation-circle-fill
+                        {% elif message.tags == 'warning' %}bi-exclamation-triangle-fill
+                        {% elif message.tags == 'info' %}bi-info-circle-fill
+                        {% else %}bi-bell-fill{% endif %} 
+                        me-2"></i>
+                    {{ message }}
+                </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     </div>
-</nav>
+    {% endfor %}
+</div>
 
-<div class="container mt-5">
+<script>
+// Auto-show toast notifications when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function(toastEl) {
+        return new bootstrap.Toast(toastEl);
+    });
+    
+    toastList.forEach(function(toast) {
+        toast.show();
+    });
+});
+</script>
+
+
+<!--End Of Notification Container -->
+
+
+<main class="container py-4" style="padding-bottom: 120px !important;">
+    <!-- Welcome Header -->
     <div class="row mb-4">
-        <div class="col-md-8">
-            <h2>Welcome, {{ request.user.username }}</h2>
-            <p><strong>Store:</strong> {{ store.name }}</p>
-            <p><strong>Subdomain:</strong> {{ store.subdomain }}.bazaa.digital</p>
-            <p><strong>WhatsApp:</strong> <a href="{{ store.get_whatsapp_link }}" target="_blank">{{ store.whatsapp_number }}</a></p>
-        </div>
-        <div class="col-md-4 text-end">
-            <a href="{% url 'product_management' %}" class="btn btn-primary mb-2">Manage Products</a>
-            <a href="{% url 'create_store_profile' %}" class="btn btn-secondary mb-2">Edit Store</a>
-        </div>
-    </div>
-
-    <h4>Recently Added Products</h4>
-    {% if recent_products %}
-        <div class="row">
-            {% for product in recent_products %}
-                <div class="col-md-4 mb-3">
-                    <div class="card h-100 shadow-sm">
-                        {% if product.images.first %}
-                            <img src="{{ product.images.first.image.url }}" class="card-img-top" alt="{{ product.title }}">
-                        {% endif %}
-                        <div class="card-body">
-                            <h5 class="card-title">{{ product.title }}</h5>
-                            {% if product.price %}
-                                <p class="card-text">
-                                    <strong>Price:</strong> KES {{ product.price }}
-                                    {% if product.percent_discount %}
-                                        <span class="badge bg-success">{{ product.percent_discount }}% Off</span>
-                                    {% endif %}
-                                </p>
-                            {% endif %}
-                            <a href="{% url 'product_management' %}" class="btn btn-sm btn-outline-primary">Edit / View</a>
+        <div class="col-12">
+            <div class="card welcome-card border-0">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="h3 fw-bold mb-2">Store Overview</h1>
+                            <p class="mb-0 opacity-75">Welcome back! Here's your store performance summary.</p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="d-flex align-items-center justify-content-md-end gap-3">
+                                {% if store.logo %}
+                                    <img src="{{ store.logo.url }}" alt="{{ store.name }}" class="store-logo-preview">
+                                {% else %}
+                                    <div class="store-logo-preview bg-white bg-opacity-20 d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-shop fs-2"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="text-end text-white">
+                                    <h5 class="fw-bold mb-0">{{ store.name }}</h5>
+                                    <small class="opacity-75">{{ store.subdomain }}.bazaa.digital</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            {% endfor %}
+            </div>
         </div>
-    {% else %}
-        <p>No products added yet. <a href="{% url 'product_management' %}">Add your first product</a></p>
-    {% endif %}
+    </div>
+
+    <!-- Statistics Grid -->
+    <div class="row g-3 mb-5">
+        <!-- Total Products -->
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card stat-card bg-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+                            <i class="bi bi-box-seam fs-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-0">{{ product_stats.total }}</h3>
+                            <p class="text-muted small mb-0">Total Products</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Products -->
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card stat-card bg-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
+                            <i class="bi bi-check-circle fs-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-0">{{ product_stats.active }}</h3>
+                            <p class="text-muted small mb-0">Active</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- In Stock -->
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card stat-card bg-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-info bg-opacity-10 text-info me-3">
+                            <i class="bi bi-archive fs-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-0">{{ product_stats.with_stock }}</h3>
+                            <p class="text-muted small mb-0">In Stock</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Announcements -->
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card stat-card bg-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
+                            <i class="bi bi-megaphone fs-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-0">{{ active_announcements }}</h3>
+                            <p class="text-muted small mb-0">Active Announcements</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card stat-card bg-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-purple bg-opacity-10 text-purple me-3">
+                            <i class="bi bi-tags fs-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-0">{{ category_count }}</h3>
+                            <p class="text-muted small mb-0">Categories</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Announcements -->
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card stat-card bg-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-secondary bg-opacity-10 text-secondary me-3">
+                            <i class="bi bi-chat-dots fs-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-0">{{ announcement_count }}</h3>
+                            <p class="text-muted small mb-0">Total Announcements</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="row g-4">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+            <!-- Recent Products -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-clock-history text-primary me-2"></i>Recent Products
+                        </h5>
+                        <a href="{% url 'product_management' %}" class="btn btn-sm btn-outline-primary">
+                            View All <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_products %}
+                        <div class="list-group list-group-flush">
+                            {% for product in recent_products %}
+                            <div class="list-group-item border-0 py-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    {% with product.images.first as primary_image %}
+                                        {% if primary_image %}
+                                            <img src="{{ primary_image.image_thumb.url|default:primary_image.image.url }}" 
+                                                 alt="{{ product.title }}" 
+                                                 class="product-thumb">
+                                        {% else %}
+                                            <div class="product-thumb bg-light rounded d-flex align-items-center justify-content-center">
+                                                <i class="bi bi-image text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                    {% endwith %}
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-semibold mb-1">{{ product.title }}</h6>
+                                        <p class="text-muted small mb-2">{{ product.caption|default:"No description"|truncatewords:8 }}</p>
+                                        <div class="d-flex align-items-center gap-3">
+                                            {% if product.price %}
+                                                <span class="fw-bold text-success">KES {{ product.price|floatformat:0 }}</span>
+                                            {% else %}
+                                                <span class="text-muted small">No price set</span>
+                                            {% endif %}
+                                            <span class="badge {% if product.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                                {% if product.is_active %}Active{% else %}Inactive{% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="bi bi-box-seam text-muted" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="text-muted">No Products Yet</h5>
+                            <p class="text-muted mb-3">Start by adding your first product to your store</p>
+                            <a href="{% url 'product_management' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-1"></i>Add Product
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Store Announcements -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-megaphone text-primary me-2"></i>Your Announcements
+                        </h5>
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#storeAnnouncementsModal">
+                            Manage All <i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if announcements_page_obj %}
+                        <div class="list-group list-group-flush">
+                            {% for announcement in announcements_page_obj %}
+                            <div class="list-group-item border-0 announcement-item py-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <h6 class="fw-semibold mb-0">{{ announcement.title }}</h6>
+                                            <span class="badge {% if announcement.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                                {% if announcement.is_active %}Active{% else %}Inactive{% endif %}
+                                            </span>
+                                        </div>
+                                        <p class="text-muted small mb-2">{{ announcement.message|truncatewords:20 }}</p>
+                                        <small class="text-muted">{{ announcement.created_at|date:"M d, Y • g:i A" }}</small>
+                                    </div>
+                                    <div class="announcement-actions ms-3">
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editAnnouncementModal"
+                                                    onclick="setEditAnnouncementData('{{ announcement.id }}', '{{ announcement.title|escapejs }}', '{{ announcement.message|escapejs }}', {{ announcement.is_active|yesno:"true,false" }})">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <form method="POST" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="toggle_status">
+                                                <input type="hidden" name="announcement_id" value="{{ announcement.id }}">
+                                                <button type="submit" class="btn btn-outline-{% if announcement.is_active %}warning{% else %}success{% endif %} btn-sm">
+                                                    <i class="bi bi-{% if announcement.is_active %}pause{% else %}play{% endif %}"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Pagination Controls -->
+                        {% if announcements_page_obj.has_other_pages %}
+                        <div class="card-footer bg-white border-top">
+                            <nav aria-label="Announcements pagination">
+                                <ul class="pagination pagination-sm justify-content-center mb-0">
+                                    {% if announcements_page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?announcement_page={{ announcements_page_obj.previous_page_number }}" aria-label="Previous">
+                                                <span aria-hidden="true">&laquo;</span>
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">&laquo;</span>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for num in announcements_page_obj.paginator.page_range %}
+                                        {% if announcements_page_obj.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?announcement_page={{ num }}">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if announcements_page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?announcement_page={{ announcements_page_obj.next_page_number }}" aria-label="Next">
+                                                <span aria-hidden="true">&raquo;</span>
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">&raquo;</span>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            <div class="text-center mt-2">
+                                <small class="text-muted">
+                                    Showing {{ announcements_page_obj.start_index }}-{{ announcements_page_obj.end_index }} of {{ announcements_page_obj.paginator.count }} announcements
+                                </small>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="bi bi-megaphone text-muted" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="text-muted">No Announcements Yet</h5>
+                            <p class="text-muted mb-3">Create your first announcement to share updates with customers</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newAnnouncementModal">
+                                <i class="bi bi-plus-circle me-1"></i>Create Announcement
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-lightning text-warning me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'product_management' %}" class="btn quick-action-btn text-start">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 rounded p-2 me-3">
+                                    <i class="bi bi-plus-circle text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">Add New Product</div>
+                                    <small class="text-muted">Create a new product listing</small>
+                                </div>
+                            </div>
+                        </a>
+                        <button class="btn quick-action-btn text-start" data-bs-toggle="modal" data-bs-target="#newAnnouncementModal">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success bg-opacity-10 rounded p-2 me-3">
+                                    <i class="bi bi-megaphone text-success"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">Create Announcement</div>
+                                    <small class="text-muted">Share updates with customers</small>
+                                </div>
+                            </div>
+                        </button>
+                        <button class="btn quick-action-btn text-start" data-bs-toggle="modal" data-bs-target="#storeProfileModal">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-info bg-opacity-10 rounded p-2 me-3">
+                                    <i class="bi bi-gear text-info"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">Store Settings</div>
+                                    <small class="text-muted">Update store information</small>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Announcements -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-broadcast text-success me-2"></i>Platform Updates
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if global_announcements %}
+                        <div class="d-flex flex-column gap-3">
+                            {% for announcement in global_announcements %}
+                            <div class="border-start border-success border-3 ps-3 py-1">
+                                <h6 class="fw-semibold mb-1">{{ announcement.title }}</h6>
+                                <p class="text-muted small mb-2">{{ announcement.message|truncatewords:20 }}</p>
+                                <small class="text-muted">{{ announcement.created_at|date:"M d, Y" }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-info-circle text-muted fs-4 mb-2"></i>
+                            <p class="text-muted small mb-0">No platform announcements at the moment</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Store Profile Modal - REDESIGNED -->
+<div class="modal fade settings-modal" id="storeProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title fw-bold">Store Settings</h5>
+                    <p class="text-muted small mb-0">Manage your store information and branding</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_store">
+                
+                <div class="modal-body">
+                    <!-- Logo Section -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <h6 class="fw-bold mb-1">Store Logo</h6>
+                            <p class="text-muted small mb-0">Upload your store logo for branding</p>
+                        </div>
+                        
+                        <div class="logo-upload-area">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-3">
+                                    {% if store.logo %}
+                                        <img src="{{ store.logo.url }}" alt="{{ store.name }}" class="logo-preview-small">
+                                    {% else %}
+                                        <div class="logo-preview-small bg-primary bg-opacity-10 d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-camera text-primary fs-5"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div class="text-start">
+                                        <h6 class="fw-semibold mb-1">Store Logo</h6>
+                                        <p class="text-muted small mb-0">JPG, PNG or GIF • Max 5MB</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="logoUpload" class="btn btn-outline-primary btn-sm mb-0">
+                                        <i class="bi bi-upload me-1"></i>Upload
+                                    </label>
+                                    <input type="file" name="logo" id="logoUpload" class="d-none" accept="image/*">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <h6 class="fw-bold mb-1">Basic Information</h6>
+                            <p class="text-muted small mb-0">Your store's public-facing details</p>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Store Name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control" value="{{ store.name }}" required 
+                                       placeholder="Enter store name">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Subdomain <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" name="subdomain" class="form-control" value="{{ store.subdomain }}" required
+                                           placeholder="your-store">
+                                    <span class="input-group-text">.bazaa.digital</span>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Store Description</label>
+                                <textarea name="description" class="form-control" rows="3" 
+                                          placeholder="Tell customers about your store...">{{ store.description }}</textarea>
+                                <div class="form-text">Brief description that appears on your storefront</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <h6 class="fw-bold mb-1">Contact Information</h6>
+                            <p class="text-muted small mb-0">How customers can reach you</p>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">WhatsApp Business Number</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-success bg-opacity-10 text-success">
+                                        <i class="bi bi-whatsapp"></i>
+                                    </span>
+                                    <input type="text" name="whatsapp_number" class="form-control" 
+                                           value="{{ store.whatsapp_number }}" 
+                                           placeholder="254712345678">
+                                </div>
+                                <div class="form-text">Include country code without + sign for WhatsApp integration</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
-<!-- Bootstrap JS Bundle -->
+<!-- New Announcement Modal -->
+<div class="modal fade" id="newAnnouncementModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title fw-bold">Create Announcement</h5>
+                    <p class="text-muted small mb-0">Share updates with your customers</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_store_announcement">
+                
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control" placeholder="Enter announcement title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Message <span class="text-danger">*</span></label>
+                        <textarea name="message" class="form-control" rows="4" placeholder="Write your announcement message..." required></textarea>
+                    </div>
+
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_active" id="newAnnouncementActive" checked>
+                        <label class="form-check-label fw-semibold" for="newAnnouncementActive">
+                            <i class="bi bi-eye me-1"></i>Publish immediately
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-megaphone me-1"></i>Publish Announcement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Announcement Modal -->
+<div class="modal fade" id="editAnnouncementModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title fw-bold">Edit Announcement</h5>
+                    <p class="text-muted small mb-0">Update your announcement</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_store_announcement">
+                <input type="hidden" name="announcement_id" id="editAnnouncementId">
+                
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title" id="editAnnouncementTitle" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Message <span class="text-danger">*</span></label>
+                        <textarea name="message" id="editAnnouncementMessage" class="form-control" rows="4" required></textarea>
+                    </div>
+
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_active" id="editAnnouncementActive">
+                        <label class="form-check-label fw-semibold" for="editAnnouncementActive">
+                            <i class="bi bi-eye me-1"></i>Make announcement active
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Update Announcement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Store Announcements Modal -->
+<div class="modal fade" id="storeAnnouncementsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title fw-bold">Your Announcements</h5>
+                    <p class="text-muted small mb-0">Manage your store announcements</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div class="modal-body">
+                {% if announcements %}
+                    <div class="d-flex flex-column gap-3">
+                        {% for announcement in announcements %}
+                        <div class="border-start border-primary border-3 ps-3 py-3 announcement-item">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <h6 class="fw-semibold mb-0">{{ announcement.title }}</h6>
+                                        <span class="badge {% if announcement.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if announcement.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                    </div>
+                                    <p class="text-muted mb-2">{{ announcement.message }}</p>
+                                    <small class="text-muted">{{ announcement.created_at|date:"M d, Y • g:i A" }}</small>
+                                </div>
+                                <div class="announcement-actions ms-3">
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary btn-sm" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#editAnnouncementModal"
+                                                onclick="setEditAnnouncementData('{{ announcement.id }}', '{{ announcement.title|escapejs }}', '{{ announcement.message|escapejs }}', {{ announcement.is_active|yesno:"true,false" }})">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <form method="POST" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="toggle_status">
+                                            <input type="hidden" name="announcement_id" value="{{ announcement.id }}">
+                                            <button type="submit" class="btn btn-outline-{% if announcement.is_active %}warning{% else %}success{% endif %} btn-sm">
+                                                <i class="bi bi-{% if announcement.is_active %}pause{% else %}play{% endif %}"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-megaphone text-muted fs-1 mb-3"></i>
+                        <h5 class="text-muted">No Announcements Yet</h5>
+                        <p class="text-muted">Create your first announcement to share updates with customers</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newAnnouncementModal">
+                            <i class="bi bi-plus-circle me-1"></i>Create Announcement
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// Function to set edit announcement data
+function setEditAnnouncementData(id, title, message, isActive) {
+    document.getElementById('editAnnouncementId').value = id;
+    document.getElementById('editAnnouncementTitle').value = title;
+    document.getElementById('editAnnouncementMessage').value = message;
+    document.getElementById('editAnnouncementActive').checked = isActive;
+}
+
+// Logo upload preview
+document.getElementById('logoUpload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const logoArea = document.querySelector('.logo-upload-area');
+            logoArea.innerHTML = `
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <img src="${e.target.result}" alt="Preview" class="logo-preview-small">
+                        <div class="text-start">
+                            <h6 class="fw-semibold mb-1">${file.name}</h6>
+                            <p class="text-muted small mb-0">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetLogoUpload()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Change
+                    </button>
+                </div>
+            `;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+function resetLogoUpload() {
+    const logoArea = document.querySelector('.logo-upload-area');
+    logoArea.innerHTML = `
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                {% if store.logo %}
+                    <img src="{{ store.logo.url }}" alt="{{ store.name }}" class="logo-preview-small">
+                {% else %}
+                    <div class="logo-preview-small bg-primary bg-opacity-10 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-camera text-primary fs-5"></i>
+                    </div>
+                {% endif %}
+                <div class="text-start">
+                    <h6 class="fw-semibold mb-1">Store Logo</h6>
+                    <p class="text-muted small mb-0">JPG, PNG or GIF • Max 5MB</p>
+                </div>
+            </div>
+            <div>
+                <label for="logoUpload" class="btn btn-outline-primary btn-sm mb-0">
+                    <i class="bi bi-upload me-1"></i>Upload
+                </label>
+                <input type="file" name="logo" id="logoUpload" class="d-none" accept="image/*">
+            </div>
+        </div>
+    `;
+    // Re-attach event listener
+    document.getElementById('logoUpload').addEventListener('change', function(e) {
+        // Same change handler as above
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const logoArea = document.querySelector('.logo-upload-area');
+                logoArea.innerHTML = `
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <img src="${e.target.result}" alt="Preview" class="logo-preview-small">
+                            <div class="text-start">
+                                <h6 class="fw-semibold mb-1">${file.name}</h6>
+                                <p class="text-muted small mb-0">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetLogoUpload()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Change
+                        </button>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add loading states to form submissions
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+                submitBtn.disabled = true;
+            }
+        });
+    });
+    
+    console.log('Dashboard loaded successfully');
+});
+</script>
+
+<!--Navigation for small devices-->
+
+<!-- Bottom Navigation for Mobile -->
+<div class="d-block d-lg-none">
+    
+    <nav class="navbar navbar-light bg-white border shadow-lg" style="
+        position: fixed;
+        bottom: 20px;
+        left: 16px;
+        right: 16px;
+        border-radius: 24px;
+        padding: 12px 0;
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.98) !important;
+        z-index: 1030;
+    ">
+        <div class="container-fluid px-4">
+            <div class="d-flex justify-content-around align-items-center w-100">
+                
+                <!-- Dashboard -->
+                <a class="nav-link text-center position-relative" href="{% url 'dashboard' %}" style="flex: 1; text-decoration: none;">
+                    <div class="d-flex flex-column align-items-center gap-1">
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" 
+                             style="width: 48px; height: 48px; transition: all 0.3s ease;">
+                            <i class="bi bi-speedometer2 fs-5 text-secondary"></i>
+                        </div>
+                        <small class="text-secondary fw-medium" style="font-size: 0.7rem;">Dashboard</small>
+                    </div>
+                </a>
+                
+                <!-- Products (Active) -->
+                <a class="nav-link text-center position-relative" href="{% url 'product_management' %}" style="flex: 1; text-decoration: none;">
+                    <div class="d-flex flex-column align-items-center gap-1">
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center shadow" 
+                             style="width: 56px; height: 56px; transition: all 0.3s ease; margin-top: -8px;">
+                            <i class="bi bi-box-seam fs-4 text-white"></i>
+                        </div>
+                        <small class="text-primary fw-bold" style="font-size: 0.7rem;">Products</small>
+                    </div>
+                </a>
+                
+                <!-- Profile -->
+                <a class="nav-link text-center position-relative" href="#" data-bs-toggle="modal" data-bs-target="#storeProfileModal" style="flex: 1; text-decoration: none;">
+                    <div class="d-flex flex-column align-items-center gap-1">
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" 
+                             style="width: 48px; height: 48px; transition: all 0.3s ease;">
+                            <i class="bi bi-person fs-5 text-secondary"></i>
+                        </div>
+                        <small class="text-secondary fw-medium" style="font-size: 0.7rem;">Profile</small>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </nav>
+</div>
+
+<style>
+    /* Mobile nav hover effects */
+    @media (max-width: 991.98px) {
+        .navbar .nav-link:hover .rounded-circle {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .navbar .nav-link:active .rounded-circle {
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<!-- End of Navigation for Mobile -->
+
+
 </body>
 </html>

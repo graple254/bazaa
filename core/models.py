@@ -60,8 +60,8 @@ class Store(models.Model):
 
 
 class Category(models.Model):
-    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='categories')
-    name = models.CharField(max_length=120)
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='categories', blank=True, null=True)
+    name = models.CharField(max_length=120, blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -222,3 +222,26 @@ class Like(models.Model):
 
     def __str__(self):
         return f"Like on {self.product.title} from {self.user_ip}"
+
+
+class Announcement_Store(models.Model):
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='announcements')
+    title = models.CharField(max_length=150, blank=True, null=True)
+    message = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Announcement for {self.store.name}: {self.title}"
+    
+
+
+
+class Announcement_Global_For_All_Store(models.Model):
+    title = models.CharField(max_length=150, blank=True, null=True)
+    message = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Global Announcement: {self.title}"

@@ -103,3 +103,22 @@ class ProductImageAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
     search_fields = ('product__title',)
     ordering = ('-created_at',)
+
+
+
+@admin.register(Announcement_Store)
+class AnnouncementStoreAdmin(admin.ModelAdmin):
+    list_display = ("title", "store", "is_active", "created_at")
+    list_filter = ("is_active", "store")
+    search_fields = ("title", "message", "store__name")
+    readonly_fields = ("created_at",)
+    ordering = ("-created_at",)
+
+
+@admin.register(Announcement_Global_For_All_Store)
+class GlobalAnnouncementAdmin(admin.ModelAdmin):
+    list_display = ("title", "is_active", "created_at")
+    list_filter = ("is_active",)
+    search_fields = ("title", "message")
+    readonly_fields = ("created_at",)
+    ordering = ("-created_at",)
