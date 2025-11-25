@@ -1,4 +1,4 @@
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
@@ -22,6 +22,34 @@ User = get_user_model()
 
 def index_view(request):
     return render(request, 'files/index.html')
+
+
+#---------------------------
+# STORE FRONTEND VIEW
+#--------------------------
+
+def storefront_view(request):
+    store = getattr(request, "subdomain_store", None)
+
+    if store is None:
+        return render(request, "files/store_not_found.html", status=404)
+
+    products = store.products.filter(is_active=True)
+    categories = store.categories.all()
+    active_announcements = store.announcements.filter(is_active=True).first()
+
+    return render(request, "files/home.html", {
+        "store": store,
+        "products": products,
+        "categories": categories,
+        "active_announcements": active_announcements
+    })
+
+
+
+# ---------------------------
+# End Of STORE FRONTEND VIEW
+# ---------------------------
 
 
 def signup_view(request):
@@ -293,8 +321,116 @@ def shop_manager_dashboard_view(request):
 
     return render(request, 'files/shop_manager_dashboard.html', context)
 
+#----------------------------
+# HTMX ENDPOINTS
+#---------------------------
+
+# ADD THESE NEW VIEWS - KEEP YOUR EXISTING shop_manager_dashboard_view EXACTLY AS IS
+
+@login_required
+@shop_manager_required
+def create_announcement_htmx(request):
+    """HTMX endpoint for creating announcements without page reload"""
+    if request.method == "POST":
+        store = request.user.store
+        title = request.POST.get("title")
+        message_body = request.POST.get("message")
+        status = request.POST.get("is_active") == "on"
+
+        if not title or not message_body:
+            return JsonResponse({'success': False, 'error': 'Both fields are required'})
+
+        Announcement_Store.objects.create(
+            store=store,
+            title=title,
+            message=message_body,
+            is_active=status
+        )
+
+        return JsonResponse({'success': True, 'message': 'Announcement created successfully!'})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+@shop_manager_required
+def edit_announcement_htmx(request):
+    """HTMX endpoint for editing announcements without page reload"""
+    if request.method == "POST":
+        store = request.user.store
+        ann_id = request.POST.get("announcement_id")
+        
+        try:
+            ann = Announcement_Store.objects.get(id=ann_id, store=store)
+            ann.title = request.POST.get("title")
+            ann.message = request.POST.get("message")
+            ann.is_active = request.POST.get("is_active") == "on"
+            ann.save()
+
+            return JsonResponse({'success': True, 'message': 'Announcement updated successfully!'})
+        except Announcement_Store.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Announcement not found'})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+@shop_manager_required
+def toggle_announcement_htmx(request):
+    """HTMX endpoint for toggling announcement status without page reload"""
+    if request.method == "POST":
+        store = request.user.store
+        ann_id = request.POST.get("announcement_id")
+        
+        try:
+            ann = Announcement_Store.objects.get(id=ann_id, store=store)
+            ann.is_active = not ann.is_active
+            ann.save()
+
+            return JsonResponse({
+                'success': True, 
+                'message': 'Status updated successfully!',
+                'is_active': ann.is_active
+            })
+        except Announcement_Store.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Announcement not found'})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+@shop_manager_required
+def update_store_htmx(request):
+    """HTMX endpoint for updating store profile without page reload"""
+    if request.method == "POST":
+        store = request.user.store
+        new_name = request.POST.get("name")
+        new_desc = request.POST.get("description")
+        new_whatsapp = request.POST.get("whatsapp_number")
+        new_sub = request.POST.get("subdomain")
+        new_logo = request.FILES.get("logo")
+
+        if new_sub and new_sub != store.subdomain:
+            if Store.objects.filter(subdomain=new_sub).exclude(id=store.id).exists():
+                return JsonResponse({'success': False, 'error': 'Subdomain already in use'})
+
+        store.name = new_name
+        store.description = new_desc
+        store.whatsapp_number = new_whatsapp
+        store.subdomain = new_sub
+
+        if new_logo:
+            store.logo = new_logo
+
+        store.save()
+
+        return JsonResponse({'success': True, 'message': 'Store profile updated successfully!'})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
+
+
+#---------------------------
+# HTMX ENDPOINTS
+#---------------------------
 
 
 @login_required

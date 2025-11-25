@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-##^^1sc7to8n15b^dmsclkvb^7prfsf*5j&8oi7u+&m*s0-qjk
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://4c70bf8697ed.ngrok-free.app']
+CSRF_TRUSTED_ORIGINS = ['https://36858fc9ae6a.ngrok-free.app']
 
 AUTH_USER_MODEL = 'core.User'
 # Application definition
@@ -32,6 +32,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "core.subdomain_middleware.SubdomainMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',

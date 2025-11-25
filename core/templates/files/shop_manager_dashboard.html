@@ -1,13 +1,20 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - {{ store.name }}</title>
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" href="{% static 'files/favicon.ico' %}" />
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Add HTMX for enhanced experience -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
+    <!-- KEEP ALL YOUR EXISTING CSS - IT STAYS EXACTLY THE SAME -->
     <style>
         :root {
             --border-radius: 0.75rem;
@@ -204,10 +211,21 @@
                 padding: 1.25rem;
             }
         }
+
+        /* Mobile nav hover effects */
+        @media (max-width: 991.98px) {
+            .navbar .nav-link:hover .rounded-circle {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+            
+            .navbar .nav-link:active .rounded-circle {
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body class="bg-light">
-
 
 <header class="py-3 bg-light sticky-top">
     <div class="container">
@@ -244,9 +262,6 @@
     </div>
 </header>
 
-
-<!----Notification Container-->
-
 <!-- Toast Notifications -->
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
     {% for message in messages %}
@@ -270,24 +285,6 @@
     </div>
     {% endfor %}
 </div>
-
-<script>
-// Auto-show toast notifications when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
-    var toastList = toastElList.map(function(toastEl) {
-        return new bootstrap.Toast(toastEl);
-    });
-    
-    toastList.forEach(function(toast) {
-        toast.show();
-    });
-});
-</script>
-
-
-<!--End Of Notification Container -->
-
 
 <main class="container py-4" style="padding-bottom: 120px !important;">
     <!-- Welcome Header -->
@@ -491,7 +488,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     {% endif %}
                 </div>
             </div>
-
             <!-- Store Announcements -->
             <div class="card">
                 <div class="card-header">
@@ -528,7 +524,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     onclick="setEditAnnouncementData('{{ announcement.id }}', '{{ announcement.title|escapejs }}', '{{ announcement.message|escapejs }}', {{ announcement.is_active|yesno:"true,false" }})">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <form method="POST" class="d-inline">
+                                            <!-- FIXED: HTMX toggle button with no content swapping -->
+                                            <form method="POST" class="d-inline toggle-form" 
+                                                hx-post="{% url 'toggle_announcement_htmx' %}" 
+                                                hx-vals='{"announcement_id": "{{ announcement.id }}"}'
+                                                hx-swap="none"
+                                                hx-on::after-request="handleToggleResponse(event)">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="action" value="toggle_status">
                                                 <input type="hidden" name="announcement_id" value="{{ announcement.id }}">
@@ -686,7 +687,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </main>
 
-<!-- Store Profile Modal - REDESIGNED -->
+<!-- Store Profile Modal - UPDATED WITH HTMX AND FALLBACK -->
 <div class="modal fade settings-modal" id="storeProfileModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -698,7 +699,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             
-            <form method="POST" enctype="multipart/form-data">
+            <!-- UPDATED: HTMX form with fallback -->
+            <form method="POST" 
+                  enctype="multipart/form-data"
+                  action="{% url 'dashboard' %}"
+                  hx-post="{% url 'update_store_htmx' %}"
+                  hx-encoding="multipart/form-data"
+                  hx-on::after-request="handleStoreResponse(event)">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="update_store">
                 
@@ -804,7 +811,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
-<!-- New Announcement Modal -->
+<!-- New Announcement Modal - UPDATED WITH HTMX AND FALLBACK -->
 <div class="modal fade" id="newAnnouncementModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -816,7 +823,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             
-            <form method="POST">
+            <!-- UPDATED: HTMX form with fallback -->
+            <form method="POST" 
+                  action="{% url 'dashboard' %}"
+                  hx-post="{% url 'create_announcement_htmx' %}"
+                  hx-on::after-request="handleAnnouncementResponse(event)">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_store_announcement">
                 
@@ -852,7 +863,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
-<!-- Edit Announcement Modal -->
+<!-- Edit Announcement Modal - UPDATED WITH HTMX AND FALLBACK -->
 <div class="modal fade" id="editAnnouncementModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -864,7 +875,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             
-            <form method="POST">
+            <!-- UPDATED: HTMX form with fallback -->
+            <form method="POST" 
+                  action="{% url 'dashboard' %}"
+                  hx-post="{% url 'edit_announcement_htmx' %}"
+                  hx-on::after-request="handleAnnouncementResponse(event)">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="edit_store_announcement">
                 <input type="hidden" name="announcement_id" id="editAnnouncementId">
@@ -937,7 +952,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 onclick="setEditAnnouncementData('{{ announcement.id }}', '{{ announcement.title|escapejs }}', '{{ announcement.message|escapejs }}', {{ announcement.is_active|yesno:"true,false" }})">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <form method="POST" class="d-inline">
+                                        <!-- UPDATED: HTMX toggle button with fallback -->
+                                        <!-- UPDATED: HTMX toggle button with fallback - PREVENTS CONTENT SWAPPING -->
+                                        <form method="POST" class="d-inline toggle-form" 
+                                            hx-post="{% url 'toggle_announcement_htmx' %}" 
+                                            hx-vals='{"announcement_id": "{{ announcement.id }}"}'
+                                            hx-swap="none"
+                                            hx-on::after-request="handleToggleResponse(event)">
                                             {% csrf_token %}
                                             <input type="hidden" name="action" value="toggle_status">
                                             <input type="hidden" name="announcement_id" value="{{ announcement.id }}">
@@ -984,30 +1005,182 @@ function setEditAnnouncementData(id, title, message, isActive) {
     document.getElementById('editAnnouncementActive').checked = isActive;
 }
 
-// Logo upload preview
-document.getElementById('logoUpload').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const logoArea = document.querySelector('.logo-upload-area');
-            logoArea.innerHTML = `
-                <div class="d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center gap-3">
-                        <img src="${e.target.result}" alt="Preview" class="logo-preview-small">
-                        <div class="text-start">
-                            <h6 class="fw-semibold mb-1">${file.name}</h6>
-                            <p class="text-muted small mb-0">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetLogoUpload()">
-                        <i class="bi bi-arrow-clockwise me-1"></i>Change
-                    </button>
-                </div>
-            `;
-        };
-        reader.readAsDataURL(file);
+// Handle announcement creation/editing responses
+function handleAnnouncementResponse(event) {
+    // If HTMX is working, prevent default form submission
+    if (window.htmx) {
+        event.preventDefault();
+        const response = event.detail.xhr.response ? JSON.parse(event.detail.xhr.response) : null;
+        
+        if (response && response.success) {
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(event.target.closest('.modal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // Show success toast
+            showToast(response.message || 'Operation completed successfully!', 'success');
+            
+            // Reload the page after a short delay to see updated data
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else if (response && response.error) {
+            showToast(response.error, 'error');
+        }
     }
+    // If HTMX is not available, the form will submit normally (fallback)
+}
+
+// Handle store profile update responses
+function handleStoreResponse(event) {
+    // If HTMX is working, prevent default form submission
+    if (window.htmx) {
+        event.preventDefault();
+        const response = event.detail.xhr.response ? JSON.parse(event.detail.xhr.response) : null;
+        
+        if (response && response.success) {
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(event.target.closest('.modal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // Show success toast
+            showToast(response.message || 'Store profile updated successfully!', 'success');
+            
+            // Reload the page to see updated store info
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else if (response && response.error) {
+            showToast(response.error, 'error');
+        }
+    }
+    // If HTMX is not available, the form will submit normally (fallback)
+}
+
+// Handle toggle status responses (simpler version with reload)
+function handleToggleResponse(event) {
+    // If HTMX is working, prevent default form submission
+    if (window.htmx) {
+        event.preventDefault();
+        const response = event.detail.xhr.response ? JSON.parse(event.detail.xhr.response) : null;
+        
+        if (response && response.success) {
+            showToast(response.message || 'Status updated successfully!', 'success');
+            // Reload to see updated status (no JSON flash since we're not swapping)
+            setTimeout(() => {
+                window.location.reload();
+            }, 800);
+        } else if (response && response.error) {
+            showToast(response.error, 'error');
+        }
+    }
+    // If HTMX is not available, the form will submit normally (fallback)
+}
+
+// Enhanced toast function
+function showToast(message, type = 'info') {
+    // Create toast element
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0" 
+             role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <div class="d-flex align-items-center">
+                        <i class="bi 
+                            ${type === 'success' ? 'bi-check-circle-fill' :
+                              type === 'error' ? 'bi-exclamation-circle-fill' :
+                              type === 'warning' ? 'bi-exclamation-triangle-fill' :
+                              'bi-info-circle-fill'} 
+                            me-2"></i>
+                        ${message}
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    // Add to container and show
+    const container = document.querySelector('.toast-container');
+    container.insertAdjacentHTML('beforeend', toastHtml);
+    
+    const toastElement = container.lastElementChild;
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    
+    // Remove from DOM after hide
+    toastElement.addEventListener('hidden.bs.toast', function() {
+        toastElement.remove();
+    });
+}
+
+// Add loading states to HTMX requests
+document.addEventListener('htmx:beforeRequest', function(evt) {
+    const submitBtn = evt.target.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+        submitBtn.disabled = true;
+    }
+});
+
+document.addEventListener('htmx:afterRequest', function(evt) {
+    const submitBtn = evt.target.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        // Reset button text based on the form type
+        if (evt.target.closest('#newAnnouncementModal')) {
+            submitBtn.innerHTML = '<i class="bi bi-megaphone me-1"></i>Publish Announcement';
+        } else if (evt.target.closest('#editAnnouncementModal')) {
+            submitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Update Announcement';
+        } else if (evt.target.closest('#storeProfileModal')) {
+            submitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Save Changes';
+        }
+        submitBtn.disabled = false;
+    }
+});
+
+// Logo upload preview (keep your existing function)
+document.addEventListener('DOMContentLoaded', function() {
+    const logoUpload = document.getElementById('logoUpload');
+    if (logoUpload) {
+        logoUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const logoArea = document.querySelector('.logo-upload-area');
+                    logoArea.innerHTML = `
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="${e.target.result}" alt="Preview" class="logo-preview-small">
+                                <div class="text-start">
+                                    <h6 class="fw-semibold mb-1">${file.name}</h6>
+                                    <p class="text-muted small mb-0">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetLogoUpload()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Change
+                            </button>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Auto-show toast notifications when page loads
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function(toastEl) {
+        return new bootstrap.Toast(toastEl);
+    });
+    
+    toastList.forEach(function(toast) {
+        toast.show();
+    });
 });
 
 function resetLogoUpload() {
@@ -1037,7 +1210,6 @@ function resetLogoUpload() {
     `;
     // Re-attach event listener
     document.getElementById('logoUpload').addEventListener('change', function(e) {
-        // Same change handler as above
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
@@ -1062,29 +1234,10 @@ function resetLogoUpload() {
         }
     });
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Add loading states to form submissions
-    const forms = document.querySelectorAll('form');
-    forms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            const submitBtn = this.querySelector('button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
-                submitBtn.disabled = true;
-            }
-        });
-    });
-    
-    console.log('Dashboard loaded successfully');
-});
 </script>
 
-<!--Navigation for small devices-->
-
-<!-- Bottom Navigation for Mobile -->
+<!-- Navigation for Mobile (keep your existing code) -->
 <div class="d-block d-lg-none">
-    
     <nav class="navbar navbar-light bg-white border shadow-lg" style="
         position: fixed;
         bottom: 20px;
@@ -1135,23 +1288,6 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </nav>
 </div>
-
-<style>
-    /* Mobile nav hover effects */
-    @media (max-width: 991.98px) {
-        .navbar .nav-link:hover .rounded-circle {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .navbar .nav-link:active .rounded-circle {
-            transform: translateY(0);
-        }
-    }
-</style>
-
-<!-- End of Navigation for Mobile -->
-
 
 </body>
 </html>
