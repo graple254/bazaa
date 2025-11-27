@@ -105,6 +105,22 @@ class ProductImageAdmin(admin.ModelAdmin):
     ordering = ('-created_at',)
 
 
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('product', 'user_name', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('product__title', 'user_name', 'text')
+    readonly_fields = ('created_at',)
+    ordering = ('-created_at',)
+
+
+@admin.register(Like)
+class LikeAdmin(admin.ModelAdmin):
+    list_display = ('product', 'user_ip', 'created_at')
+    search_fields = ('product__title', 'user_ip')
+    readonly_fields = ('created_at',)
+    ordering = ('-created_at',)
+
 
 @admin.register(Announcement_Store)
 class AnnouncementStoreAdmin(admin.ModelAdmin):

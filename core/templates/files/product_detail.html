@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>{{ product.title }} - {{ store.name }}</title>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+      <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+      <style>
+            * {
+                  margin: 0;
+                  padding: 0;
+                  box-sizing: border-box;
+            }
+            
+            body {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  background: #f5f5f5;
+                  padding-top: 70px;
+            }
+            
+            .header {
+                  position: fixed;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  background: white;
+                  padding: 1rem 0;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                  z-index: 1000;
+            }
+            
+            .container {
+                  max-width: 1200px;
+                  margin: 0 auto;
+                  padding: 0 1rem;
+            }
+            
+            .product-grid {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 2rem;
+                  margin: 2rem 0;
+            }
+            
+            .image-section img {
+                  width: 100%;
+                  border-radius: 8px;
+                  background: white;
+                  padding: 1rem;
+            }
+            
+            .thumb-grid {
+                  display: grid;
+                  grid-template-columns: repeat(4, 1fr);
+                  gap: 0.5rem;
+                  margin-top: 1rem;
+            }
+            
+            .thumb-grid img {
+                  width: 100%;
+                  height: 80px;
+                  object-fit: cover;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  padding: 0;
+            }
+            
+            .detail-card {
+                  background: white;
+                  padding: 2rem;
+                  border-radius: 8px;
+                  height: fit-content;
+            }
+            
+            .price {
+                  font-size: 2rem;
+                  font-weight: 600;
+                  color: #e63946;
+            }
+            
+            .old-price {
+                  text-decoration: line-through;
+                  color: #999;
+                  font-size: 1.2rem;
+                  margin-right: 1rem;
+            }
+            
+            .btn {
+                  border: none;
+                  padding: 0.8rem 2rem;
+                  border-radius: 6px;
+                  cursor: pointer;
+                  font-weight: 500;
+                  transition: all 0.3s;
+                  text-decoration: none;
+                  display: inline-block;
+            }
+            
+            .btn-primary {
+                  background: #0d6efd;
+                  color: white;
+            }
+            
+            .btn-primary:hover {
+                  background: #0b5ed7;
+                  transform: translateY(-2px);
+            }
+            
+            .btn-like {
+                  background: white;
+                  border: 1px solid #ddd;
+                  padding: 0.5rem 1rem;
+                  border-radius: 50px;
+            }
+            
+            .btn-like.liked {
+                  background: #ffe0e0;
+                  border-color: #e63946;
+                  color: #e63946;
+            }
+            
+            .comment-section {
+                  background: white;
+                  padding: 2rem;
+                  border-radius: 8px;
+                  margin-top: 2rem;
+            }
+            
+            .comment-form input,
+            .comment-form textarea {
+                  width: 100%;
+                  padding: 0.8rem;
+                  border: 1px solid #ddd;
+                  border-radius: 6px;
+                  margin-bottom: 1rem;
+            }
+            
+            .comment-item {
+                  padding: 1rem 0;
+                  border-bottom: 1px solid #eee;
+            }
+            
+            .related-grid {
+                  display: grid;
+                  grid-template-columns: repeat(4, 1fr);
+                  gap: 1rem;
+                  margin-top: 3rem;
+            }
+            
+            .product-card {
+                  background: white;
+                  border-radius: 8px;
+                  overflow: hidden;
+                  transition: transform 0.3s;
+            }
+            
+            .product-card:hover {
+                  transform: translateY(-4px);
+            }
+            
+            .product-card img {
+                  width: 100%;
+                  height: 200px;
+                  object-fit: cover;
+            }
+            
+            .product-card-body {
+                  padding: 1rem;
+            }
+            
+            .badge {
+                  display: inline-block;
+                  padding: 0.4rem 0.8rem;
+                  border-radius: 50px;
+                  font-size: 0.85rem;
+                  font-weight: 500;
+            }
+            
+            .badge-danger { background: #e63946; color: white; }
+            .badge-warning { background: #ffc107; color: black; }
+            .badge-success { background: #28a745; color: white; }
+            
+            @media (max-width: 768px) {
+                  .product-grid {
+                        grid-template-columns: 1fr;
+                        gap: 1rem;
+                  }
+                  
+                  .related-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                  }
+                  
+                  .thumb-grid {
+                        grid-template-columns: repeat(3, 1fr);
+                  }
+            }
+      </style>
+</head>
+<body>
+      <header class="header">
+            <div class="container">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="margin: 0;"><i class="bi bi-shop"></i> {{ store.name }}</h2>
+                        <a href="{% url 'storefront' %}" class="btn btn-primary">All Products</a>
+                  </div>
+            </div>
+      </header>
+
+      <div class="container">
+            <div class="product-grid">
+                  <div class="image-section">
+                        {% if primary_image %}
+                              <img src="{{ primary_image.image_large.url }}" alt="{{ product.title }}" id="mainImage">
+                        {% else %}
+                              <div style="height: 400px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                                    <i class="bi bi-image" style="font-size: 4rem; color: #ccc;"></i>
+                              </div>
+                        {% endif %}
+                        
+                        {% if product.images.count > 1 %}
+                        <div class="thumb-grid">
+                              {% for image in product.images.all %}
+                              <img src="{{ image.image_thumb.url }}" alt="{{ product.title }}" onclick="changeImage('{{ image.image_large.url }}')">
+                              {% endfor %}
+                        </div>
+                        {% endif %}
+                  </div>
+                  
+                  <div>
+                        <div class="detail-card">
+                              {% if product.percent_discount %}
+                              <span class="badge badge-danger">-{{ product.percent_discount }}% OFF</span>
+                              {% endif %}
+                              
+                              <h1 style="margin: 1rem 0;">{{ product.title }}</h1>
+                              
+                              {% if product.caption %}
+                              <p style="color: #666; margin-bottom: 1.5rem;">{{ product.caption }}</p>
+                              {% endif %}
+                              
+                              <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div>
+                                          {% if product.was_price and product.was_price > product.price %}
+                                          <span class="old-price">£{{ product.was_price }}</span>
+                                          {% endif %}
+                                          <span class="price">£{{ product.price }}</span>
+                                    </div>
+                                    
+                                    <button class="btn-like {% if user_has_liked %}liked{% endif %}"
+                                          hx-post="{% url 'like_product' product.id %}"
+                                          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                          hx-swap="none"
+                                          id="detail-like-btn">
+                                          <i class="bi {% if user_has_liked %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                                          <span class="like-count">{{ product.likes.count }}</span>
+                                    </button>
+                              </div>
+                              
+                              <div style="margin-bottom: 1.5rem;">
+                                    {% if product.available_stock and product.available_stock > 0 %}
+                                          {% if product.available_stock < 10 %}
+                                          <span class="badge badge-warning">Only {{ product.available_stock }} left</span>
+                                          {% else %}
+                                          <span class="badge badge-success">In Stock</span>
+                                          {% endif %}
+                                    {% else %}
+                                    <span class="badge" style="background: #6c757d; color: white;">Out of Stock</span>
+                                    {% endif %}
+                              </div>
+                              
+                              {% if product.available_stock and product.available_stock > 0 %}
+                              <a href="{{ whatsapp_link }}" class="btn btn-primary" style="width: 100%; text-align: center;" target="_blank">
+                                    <i class="bi bi-whatsapp"></i> Buy on WhatsApp
+                              </a>
+                              {% else %}
+                              <button class="btn" style="width: 100%; background: #ddd; cursor: not-allowed;" disabled>
+                                    Out of Stock
+                              </button>
+                              {% endif %}
+                        </div>
+                        
+                        <div class="comment-section">
+                              <h3 style="margin-bottom: 1.5rem;">
+                                    <i class="bi bi-chat-text"></i> Comments (<span id="comment-count">{{ product.comments.count }}</span>)
+                              </h3>
+                              
+                              <form class="comment-form" 
+                                    hx-post="{% url 'add_comment' product.id %}" 
+                                    hx-swap="none"
+                                    id="comment-form">
+                                    {% csrf_token %}
+                                    <input type="text" name="user_name" placeholder="Your name (optional)" maxlength="100" id="comment-user">
+                                    <textarea name="comment_text" placeholder="Add a comment..." rows="3" required id="comment-text"></textarea>
+                                    <button type="submit" class="btn btn-primary">Post Comment</button>
+                              </form>
+                              
+                              <div id="comments-list" style="margin-top: 2rem; max-height: 400px; overflow-y: auto;">
+                                    {% for comment in product.comments.all %}
+                                    <div class="comment-item">
+                                          <div style="display: flex; justify-content: space-between;">
+                                                <strong>{{ comment.user_name }}</strong>
+                                                <small style="color: #999;">{{ comment.created_at|timesince }} ago</small>
+                                          </div>
+                                          <p style="margin-top: 0.5rem;">{{ comment.text }}</p>
+                                    </div>
+                                    {% empty %}
+                                    <p style="text-align: center; color: #999; padding: 2rem 0;">No comments yet. Be the first!</p>
+                                    {% endfor %}
+                              </div>
+                        </div>
+                  </div>
+            </div>
+            
+            {% if related_products %}
+            <div style="margin: 3rem 0;">
+                  <h3 style="margin-bottom: 1.5rem;">Related Products</h3>
+                  <div class="related-grid">
+                        {% for related_product in related_products %}
+                        <div class="product-card">
+                              {% with related_product.images.all|first as related_image %}
+                                    {% if related_image %}
+                                          <img src="{{ related_image.image_thumb.url }}" alt="{{ related_product.title }}">
+                                    {% else %}
+                                          <div style="height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+                                                <i class="bi bi-image" style="font-size: 2rem; color: #ccc;"></i>
+                                          </div>
+                                    {% endif %}
+                              {% endwith %}
+                              <div class="product-card-body">
+                                    <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">{{ related_product.title|truncatewords:4 }}</h4>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                          <span style="font-weight: 600; font-size: 1.2rem;">£{{ related_product.price }}</span>
+                                          <a href="{% url 'product_detail' related_product.id %}" class="btn btn-primary" style="padding: 0.4rem 1rem;">View</a>
+                                    </div>
+                              </div>
+                        </div>
+                        {% endfor %}
+                  </div>
+            </div>
+            {% endif %}
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function changeImage(url) {
+        document.getElementById('mainImage').src = url;
+    }
+    
+    // Handle like button responses
+    document.addEventListener('htmx:afterRequest', function(evt) {
+        // Handle like button responses
+        if (evt.detail.requestConfig.verb === 'post' && 
+            evt.detail.requestConfig.path.includes('/like-product/')) {
+                
+            // Check if response is JSON
+            const contentType = evt.detail.xhr.getResponseHeader('Content-Type');
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    const response = JSON.parse(evt.detail.xhr.responseText);
+                    const button = document.getElementById('detail-like-btn');
+                    const likeCount = button.querySelector('.like-count');
+                    const heartIcon = button.querySelector('i');
+                    
+                    likeCount.textContent = response.like_count;
+                    
+                    if (response.liked) {
+                        button.classList.add('liked');
+                        heartIcon.classList.remove('bi-heart');
+                        heartIcon.classList.add('bi-heart-fill');
+                    } else {
+                        button.classList.remove('liked');
+                        heartIcon.classList.remove('bi-heart-fill');
+                        heartIcon.classList.add('bi-heart');
+                    }
+                } catch (e) {
+                    console.error('Error parsing JSON response:', e);
+                }
+            }
+        }
+        
+      });
+        
+      document.addEventListener('htmx:afterRequest', function(evt) {
+      if (evt.detail.requestConfig.verb === 'post' &&
+            evt.detail.requestConfig.path.includes('/add-comment/')) {
+
+            const xhr = evt.detail.xhr;
+            const response = JSON.parse(xhr.responseText);
+
+            if (response.success) {
+                  // Clear form
+                  document.getElementById('comment-form').reset();
+
+                  // Update comment count
+                  document.getElementById('comment-count').textContent = response.comment_count;
+
+                  // Create new comment element
+                  const commentsList = document.getElementById('comments-list');
+                  const commentDiv = document.createElement('div');
+                  commentDiv.className = 'comment-item';
+                  commentDiv.innerHTML = `
+                  <div style="display: flex; justify-content: space-between;">
+                        <strong>${response.comment.user_name}</strong>
+                        <small style="color: #999;">${response.comment.created_at}</small>
+                  </div>
+                  <p style="margin-top: 0.5rem;">${response.comment.text}</p>
+                  `;
+
+                  // Insert at the top
+                  commentsList.insertBefore(commentDiv, commentsList.firstChild);
+
+                  // Remove "No comments yet" placeholder if exists
+                  const placeholder = commentsList.querySelector('p');
+                  if (placeholder && placeholder.textContent.includes('No comments yet')) {
+                  placeholder.remove();
+                  }
+            } else if (response.error) {
+                  alert(response.error);
+            }
+      }
+      });
+
+    
+    // Handle form validation errors
+    document.addEventListener('htmx:responseError', function(evt) {
+        if (evt.detail.requestConfig.path.includes('/add-comment/')) {
+            alert('There was an error posting your comment. Please try again.');
+        }
+    });
+</script>
+</body>
+</html>

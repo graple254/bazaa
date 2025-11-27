@@ -21,4 +21,9 @@ urlpatterns = [
     # STORE FRONT — MUST BE LAST!
     # --------------------------------------------------
     path('', storefront_view, name='storefront'),
+    path('category/<int:category_id>/', storefront_category_view, name='storefront_category'),
+    path('product/<int:product_id>/', storefront_product_detail_view, name='product_detail'),
+    path('like-product/<int:product_id>/', like_product_view, name='like_product'),
+    path('add-comment/<int:product_id>/', add_comment_view, name='add_comment'),
+
 ]

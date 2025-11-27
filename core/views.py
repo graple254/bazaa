@@ -13,8 +13,11 @@ from django.contrib import messages
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .utils import *
+from django.views.decorators.http import require_POST
+from django.utils import timezone
+
 
 User = get_user_model()
 
@@ -23,6 +26,11 @@ User = get_user_model()
 def index_view(request):
     return render(request, 'files/index.html')
 
+def get_client_ip(request):
+    xff = request.META.get('HTTP_X_FORWARDED_FOR')
+    if xff:
+        return xff.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR')
 
 #---------------------------
 # STORE FRONTEND VIEW
@@ -34,23 +42,213 @@ def storefront_view(request):
     if store is None:
         return render(request, "files/store_not_found.html", status=404)
 
-    products = store.products.filter(is_active=True)
+    # Get active products with their primary images
+    products = store.products.filter(is_active=True).prefetch_related('images')
     categories = store.categories.all()
     active_announcements = store.announcements.filter(is_active=True).first()
 
+    # Calculate discount for each product
+    for product in products:
+        product.calculate_discount()
+
+    # Pagination
+    page = request.GET.get('page', 1)
+    paginator = Paginator(products, 12)  # Show 12 products per page
+    
+    try:
+        paginated_products = paginator.page(page)
+    except PageNotAnInteger:
+        paginated_products = paginator.page(1)
+    except EmptyPage:
+        paginated_products = paginator.page(paginator.num_pages)
+
     return render(request, "files/home.html", {
         "store": store,
-        "products": products,
+        "products": paginated_products,
         "categories": categories,
-        "active_announcements": active_announcements
+        "active_announcements": active_announcements,
+        "paginator": paginator
     })
-
 
 
 # ---------------------------
 # End Of STORE FRONTEND VIEW
 # ---------------------------
 
+#---------------------------
+# PRODUCT DETAIL VIEW
+#---------------------------
+
+def storefront_product_detail_view(request, product_id):
+    store = getattr(request, "subdomain_store", None)
+
+    if store is None:
+        return render(request, "files/store_not_found.html", status=404)
+
+    product = get_object_or_404(
+        Product.objects.prefetch_related('images', 'comments', 'likes'), 
+        id=product_id, 
+        store=store, 
+        is_active=True
+    )
+    
+    # Calculate discount
+    product.calculate_discount()
+    
+    # Get primary image
+    primary_image = product.images.filter(is_primary=True).first()
+    if not primary_image:
+        primary_image = product.images.first()
+    
+    # Get related products (same category)
+    related_products = Product.objects.filter(
+        categories__in=product.categories.all(),
+        store=store,
+        is_active=True
+    ).exclude(id=product.id).distinct()[:4]
+    
+    # Calculate discount for related products
+    for related_product in related_products:
+        related_product.calculate_discount()
+
+    # Check if current user has liked this product
+    client_ip = get_client_ip(request)
+    user_has_liked = False
+    if client_ip:
+        user_has_liked = product.likes.filter(user_ip=client_ip).exists()
+
+    return render(request, "files/product_detail.html", {
+        "store": store,
+        "product": product,
+        "primary_image": primary_image,
+        "related_products": related_products,
+        "user_has_liked": user_has_liked,
+        "whatsapp_link": store.get_whatsapp_link(product.title)
+    })
+
+# ---------------------------
+# End Of PRODUCT DETAIL VIEW
+# --------------------------
+
+#-----------------------------
+# Global comment and like views
+#-----------------------------
+
+@require_POST
+def like_product_view(request, product_id):
+    store = getattr(request, "subdomain_store", None)
+    if store is None:
+        return JsonResponse({"error": "Store not found."}, status=404)
+
+    product = get_object_or_404(Product, id=product_id, store=store, is_active=True)
+    client_ip = get_client_ip(request)
+
+    # Validate IP address
+    if not client_ip:
+        return JsonResponse({"error": "Could not determine IP address."}, status=400)
+
+    existing_like = Like.objects.filter(product=product, user_ip=client_ip).first()
+
+    if existing_like:
+        existing_like.delete()
+        liked = False
+    else:
+        try:
+            Like.objects.create(product=product, user_ip=client_ip)
+            liked = True
+        except IntegrityError:
+            # In case of race condition on unique_together
+            liked = True
+
+    like_count = product.likes.count()
+
+    return JsonResponse({
+        "liked": liked,
+        "like_count": like_count
+    })
+
+@require_POST
+def add_comment_view(request, product_id):
+    store = getattr(request, "subdomain_store", None)
+    if store is None:
+        return JsonResponse({"error": "Store not found."}, status=404)
+
+    product = get_object_or_404(Product, id=product_id, store=store, is_active=True)
+    user_name = request.POST.get("user_name", "Anonymous").strip()
+    comment_text = request.POST.get("comment_text", "").strip()
+
+    if not comment_text:
+        return JsonResponse({"error": "Comment text cannot be empty."}, status=400)
+
+    # Validate comment length
+    if len(comment_text) > 1000:
+        return JsonResponse({"error": "Comment is too long."}, status=400)
+
+    # Create comment
+    comment = Comment.objects.create(
+        product=product,
+        user_name=user_name or "Anonymous",
+        text=comment_text
+    )
+
+    comment_count = product.comments.count()
+
+    return JsonResponse({
+        "success": True,
+        "comment_count": comment_count,
+        "comment": {
+            "user_name": comment.user_name,
+            "text": comment.text,
+            "created_at": comment.created_at.strftime("%b %d, %Y at %I:%M %p")
+        }
+    })
+
+#-------------------------
+# End of comment and like views
+#------------------------
+
+# Additional utility view for category filtering
+def storefront_category_view(request, category_id):
+    store = getattr(request, "subdomain_store", None)
+
+    if store is None:
+        return render(request, "files/store_not_found.html", status=404)
+
+    category = get_object_or_404(Category, id=category_id, store=store)
+    products = Product.objects.filter(
+        categories=category,
+        is_active=True
+    ).prefetch_related('images')
+    
+    categories = store.categories.all()
+
+    # Calculate discount for each product
+    for product in products:
+        product.calculate_discount()
+
+    # Pagination
+    page = request.GET.get('page', 1)
+    paginator = Paginator(products, 12)  # Show 12 products per page
+    
+    try:
+        paginated_products = paginator.page(page)
+    except PageNotAnInteger:
+        paginated_products = paginator.page(1)
+    except EmptyPage:
+        paginated_products = paginator.page(paginator.num_pages)
+
+    return render(request, "files/home.html", {
+        "store": store,
+        "products": paginated_products,
+        "categories": categories,
+        "current_category": category,
+        "paginator": paginator
+    })
+
+
+#---------------------------
+# SIGNUP VIEW
+#---------------------------
 
 def signup_view(request):
     if request.method == 'POST':
