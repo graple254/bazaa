@@ -26,35 +26,64 @@ User = get_user_model()
 def index_view(request):
     return render(request, 'files/index.html')
 
+
+#---------------------------
+# STORE FRONTEND VIEW
+#--------------------------
+
 def get_client_ip(request):
     xff = request.META.get('HTTP_X_FORWARDED_FOR')
     if xff:
         return xff.split(',')[0].strip()
     return request.META.get('REMOTE_ADDR')
 
-#---------------------------
-# STORE FRONTEND VIEW
-#--------------------------
 
 def storefront_view(request):
     store = getattr(request, "subdomain_store", None)
-
     if store is None:
         return render(request, "files/store_not_found.html", status=404)
 
-    # Get active products with their primary images
+    client_ip = get_client_ip(request)
+    liked_product_ids = set(
+        Like.objects.filter(user_ip=client_ip, product__store=store)
+                    .values_list('product_id', flat=True)
+    )
+
+    # Base queryset of active products
     products = store.products.filter(is_active=True).prefetch_related('images')
     categories = store.categories.all()
-    active_announcements = store.announcements.filter(is_active=True).first()
+    
+    # === CHANGE THIS LINE - Get ALL active announcements ===
+    active_announcements = list(store.announcements.filter(is_active=True).order_by('-created_at'))
 
-    # Calculate discount for each product
+    # =======================================================
+
+    # Search
+    query = request.GET.get('q', '').strip()
+    if query:
+        products = products.filter(title__icontains=query)
+
+    # Category filter
+    category_id = request.GET.get('category', 'all')
+    if category_id != 'all':
+        products = products.filter(categories__id=category_id)
+
+    # Sorting
+    sort = request.GET.get('sort', 'newest')
+    if sort == 'price_low':
+        products = products.order_by('price')
+    elif sort == 'price_high':
+        products = products.order_by('-price')
+    else:  # newest
+        products = products.order_by('-created_at')
+
+    # Calculate discount
     for product in products:
         product.calculate_discount()
 
     # Pagination
+    paginator = Paginator(products, 12)
     page = request.GET.get('page', 1)
-    paginator = Paginator(products, 12)  # Show 12 products per page
-    
     try:
         paginated_products = paginator.page(page)
     except PageNotAnInteger:
@@ -66,11 +95,13 @@ def storefront_view(request):
         "store": store,
         "products": paginated_products,
         "categories": categories,
-        "active_announcements": active_announcements,
-        "paginator": paginator
+        "active_announcements": active_announcements,  # ← This is correct now
+        "paginator": paginator,
+        "query": query,
+        "selected_category": category_id,
+        "selected_sort": sort,
+        "liked_product_ids": liked_product_ids,
     })
-
-
 # ---------------------------
 # End Of STORE FRONTEND VIEW
 # ---------------------------
@@ -207,43 +238,6 @@ def add_comment_view(request, product_id):
 # End of comment and like views
 #------------------------
 
-# Additional utility view for category filtering
-def storefront_category_view(request, category_id):
-    store = getattr(request, "subdomain_store", None)
-
-    if store is None:
-        return render(request, "files/store_not_found.html", status=404)
-
-    category = get_object_or_404(Category, id=category_id, store=store)
-    products = Product.objects.filter(
-        categories=category,
-        is_active=True
-    ).prefetch_related('images')
-    
-    categories = store.categories.all()
-
-    # Calculate discount for each product
-    for product in products:
-        product.calculate_discount()
-
-    # Pagination
-    page = request.GET.get('page', 1)
-    paginator = Paginator(products, 12)  # Show 12 products per page
-    
-    try:
-        paginated_products = paginator.page(page)
-    except PageNotAnInteger:
-        paginated_products = paginator.page(1)
-    except EmptyPage:
-        paginated_products = paginator.page(paginator.num_pages)
-
-    return render(request, "files/home.html", {
-        "store": store,
-        "products": paginated_products,
-        "categories": categories,
-        "current_category": category,
-        "paginator": paginator
-    })
 
 
 #---------------------------
