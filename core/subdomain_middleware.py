@@ -30,32 +30,32 @@ class SubdomainMiddleware(MiddlewareMixin):
 
 class SubdomainURLRoutingMiddleware:
     """
-    Switch URLconf based on the requested domain/subdomain.
-    Supports local testing via localhost or dev tunnels.
+    Switch URLconf based on requested host/subdomain,
+    but leave admin URL intact.
     """
-
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
         host = request.get_host().split(':')[0]  # strip port
+        path = request.path
+
+        # Leave admin alone
+        if path.startswith('/admin/'):
+            return self.get_response(request)
+
+        urlconf = 'core.urls'  # default
+
+        # Localhost testing: subdomain.localhost
         parts = host.split('.')
-
-        # Default to main site
-        urlconf = 'core.urls'
-
-        # Local testing: uchumithrifts.localhost → storefront
-        if host.endswith('localhost') or host.startswith('127.0.0.1'):
-            if len(parts) == 2:  # e.g., uchumithrifts.localhost
-                subdomain = parts[0]
-                urlconf = 'core.storefront_urls'  # <-- update the variable
+        if host == 'localhost' or host.startswith('127.0.0.1'):
+            if len(parts) == 2:  # uchumi.localhost
+                urlconf = 'core.storefront_urls'
         else:
-            # Production-style domain
-            if host == 'bazaa.digital':
-                urlconf = 'core.urls'
-            elif host.endswith('.bazaa.digital'):
+            # Production
+            if host.endswith('.bazaa.digital') and host != 'bazaa.digital':
                 urlconf = 'core.storefront_urls'
 
-        request.urlconf = urlconf  # <-- only set here once
+        request.urlconf = urlconf
         return self.get_response(request)
 

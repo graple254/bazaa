@@ -2,12 +2,10 @@ from django.urls import path
 from .views import *
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib import admin
 
 
 urlpatterns = [
     path('', index_view, name='index'),
-    path('admin/', admin.site.urls),  # ← add this
     path('signup/', signup_view, name='signup'),
     path('login/', login_view, name='login'),
     path('verify/', verify_view, name='verify'),
