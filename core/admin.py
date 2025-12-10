@@ -138,3 +138,52 @@ class GlobalAnnouncementAdmin(admin.ModelAdmin):
     search_fields = ("title", "message")
     readonly_fields = ("created_at",)
     ordering = ("-created_at",)
+
+
+@admin.register(index_Content)
+class IndexContentAdmin(admin.ModelAdmin):
+    list_display = ("heading_1", "heading_2", "section_heading_mission", "pricing_heading")
+    search_fields = ("heading_1", "heading_2", "section_heading_mission", "fact_heading", "pricing_heading")
+
+    fieldsets = (
+        ("Hero Section", {
+            "fields": (
+                "heading_1",
+                "heading_2",
+                "subheading_1",
+                "image_1",
+                "image_2",
+            )
+        }),
+
+        ("Mission Section", {
+            "fields": (
+                "section_heading_mission",
+                "image_3",
+                "image_4",
+                "image_5",
+            )
+        }),
+
+        ("Facts Section", {
+            "fields": (
+                "fact_heading",
+                "fact_subheading",
+                "fact_statement_1",
+                "fact_statement_2",
+                "fact_statement_3",
+                "fact_image_1",
+                "fact_image_2",
+                "fact_image_3",
+            )
+        }),
+
+        ("Pricing Section", {
+            "fields": (
+                "pricing_heading",
+                "pricing_subheading",
+                "monthly_price",
+                "annual_price",
+            )
+        }),
+    )

@@ -24,7 +24,8 @@ User = get_user_model()
 
 
 def index_view(request):
-    return render(request, 'files/index.html')
+    index_content = index_Content.objects.first()
+    return render(request, 'files/index.html', {'index_content': index_content})
 
 
 #---------------------------
@@ -660,6 +661,10 @@ def product_management_view(request):
         available_stock = request.POST.get("available_stock")
         images = request.FILES.getlist("images")
         category_ids = request.POST.getlist("categories")  # <-- NEW
+        about_1 = request.POST.get("about_1")
+        about_2 = request.POST.get("about_2")
+        about_3 = request.POST.get("about_3")
+        about_4 = request.POST.get("about_4")
 
         product = Product.objects.create(
             store=store,
@@ -667,7 +672,11 @@ def product_management_view(request):
             caption=caption,
             price=price or None,
             was_price=was_price or None,
-            available_stock=available_stock or 0
+            available_stock=available_stock or 0,
+            about_1=about_1,
+            about_2=about_2,
+            about_3=about_3,
+            about_4=about_4
         )
         product.calculate_discount()
         product.save()
@@ -696,6 +705,10 @@ def product_management_view(request):
         product.was_price = request.POST.get("was_price") or None
         product.available_stock = request.POST.get("available_stock") or 0
         product.is_active = True if request.POST.get("is_active") == "on" else False
+        product.about_1 = request.POST.get("about_1")
+        product.about_2 = request.POST.get("about_2")
+        product.about_3 = request.POST.get("about_3")
+        product.about_4 = request.POST.get("about_4")
 
         product.calculate_discount()
         product.save()

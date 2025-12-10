@@ -82,6 +82,14 @@ class Product(models.Model):
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='products')
     title = models.CharField(max_length=150)
     caption = models.TextField(blank=True)
+
+    about_1 = models.TextField(blank=True, null=True)
+    about_2 = models.TextField(blank=True, null=True)
+    about_3 = models.TextField(blank=True, null=True)
+    about_4 = models.TextField(blank=True, null=True)
+
+
+
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     was_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     is_active = models.BooleanField(default=True)
@@ -245,3 +253,36 @@ class Announcement_Global_For_All_Store(models.Model):
 
     def __str__(self):
         return f"Global Announcement: {self.title}"
+
+
+
+
+class index_Content(models.Model):
+    heading_1 = models.CharField(max_length=150, blank=True, null=True)
+    heading_2 = models.CharField(max_length=150, blank=True, null=True)
+    subheading_1 = models.CharField(max_length=250, blank=True, null=True)
+    image_1 = models.ImageField(upload_to='index_content/', blank=True, null=True)
+    image_2 = models.ImageField(upload_to='index_content/', blank=True, null=True)
+
+    section_heading_mission = models.CharField(max_length=150, blank=True, null=True)
+    image_3 = models.ImageField(upload_to='index_content/', blank=True, null=True)
+    image_4 = models.ImageField(upload_to='index_content/', blank=True, null=True)
+    image_5 = models.ImageField(upload_to='index_content/', blank=True, null=True)
+
+    fact_heading = models.CharField(max_length=150, blank=True, null=True)
+    fact_subheading = models.CharField(max_length=250, blank=True, null=True)
+    fact_statement_1 = models.CharField(max_length=250, blank=True, null=True)
+    fact_statement_2 = models.CharField(max_length=250, blank=True, null=True)
+    fact_statement_3 = models.CharField(max_length=250, blank=True, null=True)
+    fact_image_1 = models.ImageField(upload_to='index_content/', blank=True, null=True)
+    fact_image_2 = models.ImageField(upload_to='index_content/', blank=True, null=True)
+    fact_image_3 = models.ImageField(upload_to='index_content/', blank=True, null=True)
+
+    pricing_heading = models.CharField(max_length=150, blank=True, null=True)
+    pricing_subheading = models.CharField(max_length=250, blank=True, null=True)
+    monthly_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    annual_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+
+    def __str__(self):
+        return "Index Page Content"

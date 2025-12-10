@@ -117,8 +117,6 @@
     </div>
 </header>
 
-
-
 <!----Notification Container-->
 
 <!-- Toast Notifications -->
@@ -159,9 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-
 <!--End Of Notification Container -->
-
 
 <main class="container py-4" style="padding-bottom: 120px !important;">
     <!-- Header Section -->
@@ -412,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <tbody id="productsTableBody">
                         {% if products %}
                             {% for product in products %}
-                            <tr class="border-bottom" data-product-id="{{ product.id }}" data-status="{% if product.is_active %}active{% else %}inactive{% endif %}" data-categories="{% for category in product.categories.all %}{{ category.id }},{% endfor %}">
+                            <tr class="border-bottom" data-product-id="{{ product.id }}" data-status="{% if product.is_active %}active{% else %}inactive{% endif %}" data-categories="{% for category in product.categories.all %}{{ category.id }},{% endfor %}" data-about1="{{ product.about_1|default:''|escapejs }}" data-about2="{{ product.about_2|default:''|escapejs }}" data-about3="{{ product.about_3|default:''|escapejs }}" data-about4="{{ product.about_4|default:''|escapejs }}">
                                 <td class="ps-4 py-3">
                                     <div class="d-flex align-items-center gap-3">
                                         {% with product.images.first as primary_image %}
@@ -578,7 +574,44 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="form-text">Optional: Add detailed product description</div>
                             </div>
 
-                            <!-- Categories Field - UPDATED WITH CHECKBOXES -->
+                            <!-- About Fields Section -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">About Section</label>
+                                
+                                <!-- About 1 -->
+                                <div class="mb-2">
+                                    <label class="form-label small text-muted">About Point 1</label>
+                                    <textarea name="about_1" id="inputAbout1" class="form-control" rows="2" 
+                                              placeholder="Key feature or benefit of your product"></textarea>
+                                </div>
+                                
+                                <!-- About 2 -->
+                                <div class="mb-2">
+                                    <label class="form-label small text-muted">About Point 2</label>
+                                    <textarea name="about_2" id="inputAbout2" class="form-control" rows="2" 
+                                              placeholder="Another important feature or detail"></textarea>
+                                </div>
+                                
+                                <!-- About 3 -->
+                                <div class="mb-2">
+                                    <label class="form-label small text-muted">About Point 3</label>
+                                    <textarea name="about_3" id="inputAbout3" class="form-control" rows="2" 
+                                              placeholder="Additional product information"></textarea>
+                                </div>
+                                
+                                <!-- About 4 -->
+                                <div class="mb-2">
+                                    <label class="form-label small text-muted">About Point 4</label>
+                                    <textarea name="about_4" id="inputAbout4" class="form-control" rows="2" 
+                                              placeholder="Final key point or specification"></textarea>
+                                </div>
+                                
+                                <div class="form-text">
+                                    Add up to 4 key points about your product. These will be displayed as bullet points.
+                                </div>
+                            </div>
+
+                            <!-- Categories Field -->
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Categories</label>
                                 <div class="categories-checkbox-container">
@@ -708,6 +741,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span id="viewStatus"></span>
                             </div>
                             <p id="viewCaption" class="text-muted mb-0"></p>
+                        </div>
+
+                        <!-- About Section Display -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Key Features</label>
+                            <div id="viewAbout" class="bg-light rounded p-3">
+                                <ul class="list-unstyled mb-0" id="viewAboutList">
+                                    <!-- About points will be populated here -->
+                                </ul>
+                            </div>
                         </div>
 
                         <!-- Categories Display -->
@@ -953,7 +996,7 @@ function openEditModal(id) {
     const wasPriceElement = row.querySelector('.text-decoration-line-through');
     const wasPrice = wasPriceElement ? wasPriceElement.textContent.replace('KES ', '').replace(/,/g, '').trim() : '';
     
-    // FIX: Get stock count properly
+    // Get stock count properly
     const stockElement = row.querySelector('td:nth-child(3) .badge');
     let stock = '0';
     if (stockElement) {
@@ -971,14 +1014,26 @@ function openEditModal(id) {
     // Get categories
     const categoryIds = row.dataset.categories ? row.dataset.categories.split(',').filter(id => id) : [];
 
+    // Get about fields
+    const about1 = row.dataset.about1 || '';
+    const about2 = row.dataset.about2 || '';
+    const about3 = row.dataset.about3 || '';
+    const about4 = row.dataset.about4 || '';
+
     document.getElementById('modalTitle').textContent = 'Edit Product';
     document.getElementById('editProductId').value = id;
     document.getElementById('inputTitle').value = title;
     document.getElementById('inputCaption').value = caption !== 'No description' ? caption : '';
     document.getElementById('inputPrice').value = price;
     document.getElementById('inputWasPrice').value = wasPrice;
-    document.getElementById('inputStock').value = stock; // THIS WAS MISSING - NOW FIXED
+    document.getElementById('inputStock').value = stock;
     document.getElementById('inputActive').checked = isActive;
+    
+    // Populate about fields
+    document.getElementById('inputAbout1').value = about1;
+    document.getElementById('inputAbout2').value = about2;
+    document.getElementById('inputAbout3').value = about3;
+    document.getElementById('inputAbout4').value = about4;
     
     // CRITICAL FIX: Update the action field to 'edit'
     document.getElementById('formAction').value = 'edit';
@@ -1015,6 +1070,12 @@ function openViewModal(id) {
     const categoriesContainer = row.querySelector('td:nth-child(4)');
     const categoriesHTML = categoriesContainer ? categoriesContainer.innerHTML : '<span class="text-muted small">No categories</span>';
     
+    // Get about fields
+    const about1 = row.dataset.about1;
+    const about2 = row.dataset.about2;
+    const about3 = row.dataset.about3;
+    const about4 = row.dataset.about4;
+
     const images = Array.from(row.querySelectorAll('.product-images-data img')).map(img => img.src);
     const likes = row.querySelector('i.bi-heart-fill')?.parentElement?.textContent.trim().split(' ')[0] || 0;
     const comments = row.querySelector('i.bi-chat-dots-fill')?.parentElement?.textContent.trim().split(' ')[0] || 0;
@@ -1037,6 +1098,27 @@ function openViewModal(id) {
     document.getElementById('viewComments').textContent = comments;
     document.getElementById('viewImages').textContent = images.length;
     document.getElementById('viewCategories').innerHTML = categoriesHTML;
+
+    // Populate about section
+    const aboutList = document.getElementById('viewAboutList');
+    aboutList.innerHTML = '';
+    
+    [about1, about2, about3, about4].forEach(about => {
+        if (about && about.trim() !== '') {
+            const li = document.createElement('li');
+            li.className = 'd-flex align-items-start mb-2';
+            li.innerHTML = `
+                <i class="bi bi-check-circle-fill text-success mt-1 me-2 flex-shrink-0"></i>
+                <span class="text-muted">${about}</span>
+            `;
+            aboutList.appendChild(li);
+        }
+    });
+
+    // If no about points, show message
+    if (aboutList.children.length === 0) {
+        aboutList.innerHTML = '<li class="text-muted">No key features added</li>';
+    }
 
     const wrapper = document.getElementById('viewSwiperWrapper');
     wrapper.innerHTML = images.length 
@@ -1066,6 +1148,12 @@ function resetModal() {
     document.getElementById('imagePreview').innerHTML = '';
     document.getElementById('editProductId').value = '';
     document.getElementById('modalTitle').textContent = 'Add New Product';
+    
+    // Reset about fields
+    document.getElementById('inputAbout1').value = '';
+    document.getElementById('inputAbout2').value = '';
+    document.getElementById('inputAbout3').value = '';
+    document.getElementById('inputAbout4').value = '';
     
     // CRITICAL FIX: Reset action to 'create'
     document.getElementById('formAction').value = 'create';
@@ -1153,8 +1241,6 @@ window.addEventListener('load', function() {
 
 </script>
 
-
-
 <!-- Bottom Navigation for Mobile -->
 <div class="d-block d-lg-none">
     
@@ -1222,7 +1308,6 @@ window.addEventListener('load', function() {
         }
     }
 </style>
-
 
 </body>
 </html>
