@@ -30,9 +30,11 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "core.subdomain_middleware.SubdomainMiddleware",
+    'core.subdomain_middleware.SubdomainURLRoutingMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    "core.subdomain_middleware.SubdomainMiddleware",
+    'core.middleware.VisitorTrackingMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',

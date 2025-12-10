@@ -17,6 +17,9 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .utils import *
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+import secrets
+from django.urls import reverse
+from django.utils.http import urlencode
 
 
 User = get_user_model()
@@ -240,11 +243,9 @@ def add_comment_view(request, product_id):
 #------------------------
 
 
-
-#---------------------------
+# ---------------------------
 # SIGNUP VIEW
-#---------------------------
-
+# ---------------------------
 def signup_view(request):
     if request.method == 'POST':
         username = request.POST.get("username")
@@ -280,25 +281,22 @@ def signup_view(request):
         # Send verification email
         send_verification_email(email, otp_code)
 
-        # Redirect to verify page and pass email as GET param
-        return redirect(f"/verify?email={email}")
+        # Redirect to verify page with email query parameter
+        url = reverse('verify')  # ensures trailing slash
+        query_string = urlencode({'email': email})
+        return redirect(f"{url}?{query_string}")
 
     return render(request, "files/signup.html")
 
 
-
-
-
-
-
 # ---------------------------
-# VERIFY OTP
+# VERIFY OTP VIEW
 # ---------------------------
 def verify_view(request):
     email = request.GET.get("email") or request.POST.get("email")
     if not email:
         messages.error(request, "No email provided.")
-        return redirect("signup")
+        return redirect('signup')
 
     user = get_object_or_404(User, email=email)
 
@@ -310,7 +308,7 @@ def verify_view(request):
             otp_entry = OTP.objects.filter(user=user, is_used=False).latest('created_at')
         except OTP.DoesNotExist:
             messages.error(request, "No OTP found. Please sign up again.")
-            return redirect("signup")
+            return redirect('signup')
 
         if otp_entry.code != input_code:
             messages.error(request, "Invalid verification code.")
@@ -326,7 +324,7 @@ def verify_view(request):
 
         # Auto-login
         login(request, user)
-        return redirect("dashboard")
+        return redirect('dashboard')
 
     return render(request, "files/verify.html", {"email": email})
 
@@ -373,6 +371,64 @@ def logout_view(request):
 
 
 
+def forgot_password_view(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            messages.error(request, "No account found with that email.")
+            return render(request, "files/forgot_password.html")
+
+        token = secrets.token_urlsafe(32)
+        PasswordReset.objects.create(user=user, token=token)
+
+        reset_link = request.build_absolute_uri(f"/reset-password/{token}/")
+
+        # send email
+        send_password_reset_email(email, reset_link)
+
+        messages.success(request, "Password reset link sent to your email.")
+        return redirect("login")
+
+    return render(request, "files/forgot_password.html")
+
+
+def reset_password_view(request, token):
+    try:
+        entry = PasswordReset.objects.get(token=token, is_used=False)
+    except PasswordReset.DoesNotExist:
+        messages.error(request, "Invalid or expired link.")
+        return redirect("forgot_password")
+
+    if entry.is_expired():
+        messages.error(request, "This link has expired.")
+        return redirect("forgot_password")
+
+    if request.method == "POST":
+        new_password = request.POST.get("password")
+        confirm = request.POST.get("confirm_password")
+
+        if new_password != confirm:
+            messages.error(request, "Passwords do not match.")
+            return render(request, "files/reset_password.html")
+
+        user = entry.user
+        user.set_password(new_password)
+        user.save()
+
+        entry.is_used = True
+        entry.save()
+
+        messages.success(request, "Password reset successfully. Login now.")
+        return redirect("login")
+
+    return render(request, "files/reset_password.html")
+
+
+#---------------------------
+
 @login_required
 @shop_manager_required
 def shop_manager_dashboard_view(request):
@@ -388,6 +444,8 @@ def shop_manager_dashboard_view(request):
     # ---------------------------------------------------------
     products = store.products.all()
     categories = store.categories.all()
+
+    absolute_url = request.build_absolute_uri('/')
 
     product_stats = {
         "total": products.count(),
@@ -510,6 +568,7 @@ def shop_manager_dashboard_view(request):
         "active_announcements": active_announcements,
         "global_announcements": global_announcements,
         "announcements_page_obj": announcements_page_obj,
+        "absolute_url": absolute_url,
     }
 
     return render(request, 'files/shop_manager_dashboard.html', context)

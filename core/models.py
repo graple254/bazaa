@@ -5,6 +5,23 @@ import uuid
 from io import BytesIO
 from django.core.files.base import ContentFile
 from PIL import Image
+from django.utils import timezone
+from datetime import timedelta
+
+class Visitor(models.Model):
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    session_key = models.CharField(max_length=40, blank=True, null=True)
+    user_agent = models.TextField(blank=True, null=True)
+    url_path = models.CharField(max_length=500, blank=True, null=True)
+    method = models.CharField(max_length=10, blank=True, null=True)
+    referrer = models.URLField(blank=True, null=True)
+    location = models.CharField(max_length=255, blank=True, null=True)
+    visit_date = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.ip_address or 'Unknown IP'} visited {self.url_path} on {self.visit_date}"
+
+
 
 # -------------------------
 # User
@@ -19,6 +36,23 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.username} - {self.role}"
+
+
+
+
+
+
+class PasswordReset(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    token = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+
+    def is_expired(self):
+        # 15 minutes expiry or whatever you want
+        expiry_time = self.created_at + timedelta(minutes=15)
+        return timezone.now() > expiry_time
+
 
 # -------------------------
 # OTP

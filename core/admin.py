@@ -187,3 +187,22 @@ class IndexContentAdmin(admin.ModelAdmin):
             )
         }),
     )
+
+
+@admin.register(PasswordReset)
+class PasswordResetAdmin(admin.ModelAdmin):
+    list_display = ("user", "token", "is_used", "created_at")
+    list_filter = ("is_used", "created_at")
+    search_fields = ("user__username", "user__email", "token")
+    readonly_fields = ("user", "token", "created_at", "is_used")
+
+    ordering = ("-created_at",)    
+
+
+@admin.register(Visitor)
+class VisitorAdmin(admin.ModelAdmin):
+    list_display = ('ip_address', 'session_key', 'url_path', 'method', 'visit_date', 'location')
+    list_filter = ('method', 'visit_date', 'location')
+    search_fields = ('ip_address', 'session_key', 'url_path', 'referrer', 'user_agent')
+    readonly_fields = ('visit_date',)
+    ordering = ('-visit_date',)

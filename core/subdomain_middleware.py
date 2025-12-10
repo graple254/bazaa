@@ -25,3 +25,37 @@ class SubdomainMiddleware(MiddlewareMixin):
             request.subdomain_store = Store.objects.get(subdomain=subdomain)
         except Store.DoesNotExist:
             request.subdomain_store = None
+
+
+
+class SubdomainURLRoutingMiddleware:
+    """
+    Switch URLconf based on the requested domain/subdomain.
+    Supports local testing via localhost or dev tunnels.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        host = request.get_host().split(':')[0]  # strip port
+        parts = host.split('.')
+
+        # Default to main site
+        urlconf = 'core.urls'
+
+        # Local testing: uchumithrifts.localhost → storefront
+        if host.endswith('localhost') or host.startswith('127.0.0.1'):
+            if len(parts) == 2:  # e.g., uchumithrifts.localhost
+                subdomain = parts[0]
+                urlconf = 'core.storefront_urls'  # <-- update the variable
+        else:
+            # Production-style domain
+            if host == 'bazaa.digital':
+                urlconf = 'core.urls'
+            elif host.endswith('.bazaa.digital'):
+                urlconf = 'core.storefront_urls'
+
+        request.urlconf = urlconf  # <-- only set here once
+        return self.get_response(request)
+

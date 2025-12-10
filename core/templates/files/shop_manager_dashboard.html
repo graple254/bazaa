@@ -308,7 +308,12 @@
                                 {% endif %}
                                 <div class="text-end text-white">
                                     <h5 class="fw-bold mb-0">{{ store.name }}</h5>
-                                    <small class="opacity-75">{{ store.subdomain }}.bazaa.digital</small>
+                                        <a href="http://{{ store.subdomain }}.{{ absolute_url|cut:'http://' }}" target="_blank" class="text-decoration-none">
+                                            <span class="badge bg-light text-dark border">
+                                                <i class="bi bi-link-45deg me-1"></i>
+                                                {{ store.subdomain }}.{{ absolute_url|cut:'http://' }}
+                                            </span>
+                                        </a>
                                 </div>
                             </div>
                         </div>
